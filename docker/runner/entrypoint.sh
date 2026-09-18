@@ -14,7 +14,8 @@ if [[ "$(id -u)" == "0" ]]; then
         target="/home/runner/.local/share/godot/export_templates/$(basename "$templates")"
         [[ -f "$target/android_debug.apk" ]] || { rm -rf "$target"; cp -r "$templates" "$target"; echo "Templates d export installes : $(basename "$templates")"; }
     done
-    chown -R runner:runner /home/runner/actions-runner/_work /home/runner/.local /home/runner/.gradle
+    mkdir -p /home/runner/runner-config
+    chown -R runner:runner /home/runner/actions-runner/_work /home/runner/.local /home/runner/.gradle /home/runner/runner-config
     exec gosu runner "$0" "$@"
 fi
 
@@ -24,6 +25,15 @@ GF_RUNNER_NAME="${GF_RUNNER_NAME:-gf-local}"   # nom stable : --replace reprend 
 GF_RUNNER_LABELS="${GF_RUNNER_LABELS:-gf}"
 
 cd /home/runner/actions-runner
+
+# Identite persistante : les fichiers d enregistrement vivent dans le volume runner-config, un
+# rebuild du conteneur reprend le meme runner sans nouveau token.
+CONFIG_DIR=/home/runner/runner-config
+if [[ -f "$CONFIG_DIR/.runner" && -f "$CONFIG_DIR/.credentials" ]]; then
+    cp "$CONFIG_DIR"/.runner "$CONFIG_DIR"/.credentials* . 2>/dev/null || true
+    echo "Runner deja enregistre (${GF_RUNNER_NAME}) : reprise sans nouveau token."
+    exec ./run.sh
+fi
 
 # Un PAT (ghp_/github_pat_) est echange contre un token de registration ; un token de registration (A…) est utilise tel quel.
 if [[ "$GF_RUNNER_TOKEN" == ghp_* || "$GF_RUNNER_TOKEN" == github_pat_* ]]; then
@@ -35,11 +45,8 @@ else
     REG_TOKEN="$GF_RUNNER_TOKEN"
 fi
 
-cleanup() {
-    echo "Desenregistrement de ${GF_RUNNER_NAME}…"
-    ./config.sh remove --token "${REG_TOKEN}" || true
-}
-trap cleanup EXIT INT TERM
+# Pas de desenregistrement a l arret : l identite est conservee dans le volume (supprimer le runner
+# depuis GitHub > Runners si on veut vraiment le retirer).
 
 ./config.sh --unattended --replace \
     --url "${GF_RUNNER_URL}" \
@@ -48,5 +55,6 @@ trap cleanup EXIT INT TERM
     --labels "${GF_RUNNER_LABELS}" \
     --work _work
 
+cp .runner .credentials* "$CONFIG_DIR"/ 2>/dev/null || true
 echo "Runner pret : ${GF_RUNNER_NAME} (${GF_RUNNER_LABELS}) sur ${GF_RUNNER_URL}"
-./run.sh
+exec ./run.sh

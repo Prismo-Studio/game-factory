@@ -18,6 +18,7 @@ services:
             - "host.docker.internal:host-gateway"
         volumes:
             - runner-work:/home/runner/actions-runner/_work
+            - runner-config:/home/runner/runner-config
             - godot-cache:/home/runner/.local/share/godot
             - gradle-cache:/home/runner/.gradle
         mem_limit: 8g
@@ -41,6 +42,7 @@ services:
 
 volumes:
     runner-work:
+    runner-config:
     godot-cache:
     gradle-cache:
     ollama:
