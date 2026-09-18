@@ -74,5 +74,8 @@ bibliothèques CC0 (Poly Pizza, Kenney). Un ticket art sans dimensions ne passe 
 
 Le style final d'un jeu (palette, direction artistique) est validé par un humain sur le premier lot
 d'assets. `needs-human:art` signifie : le jeu tourne avec un placeholder, personne n'est bloqué, mais
-il faudra un vrai asset avant publication. La liste des `needs-human:art` ouverts est la checklist d'art
-avant release.
+il faudra un vrai asset avant publication. **Un placeholder mergé ne termine pas le ticket** : `on-pr-merged`
+le laisse ouvert avec `needs-human:art` (sans `todo:art`), et il ne passe en `done` que quand un vrai
+asset est mergé. Pour que la pipeline retente seule (clé API posée, pack indexé, mots-clés `Recherche :`
+corrigés dans le ticket) : retirer `needs-human:art` et poser `todo:art`. La liste des `needs-human:art`
+ouverts est la checklist d'art avant release.

@@ -34,7 +34,7 @@ Sorties latérales, possibles depuis n'importe quel état : `blocked`, `needs-hu
 | `done` | workflow (PR mergée) | — | terminé |
 | `blocked` | n'importe quelle pipeline | **humain** | prérequis manquant : secret, décision, dépendance |
 | `needs-human` | n'importe quelle pipeline | **humain** | budget ou tentatives épuisés, ou verdict impossible |
-| `needs-human:art` | Assets | **humain** | placeholder posé, un humain doit fournir l'asset |
+| `needs-human:art` | Assets | **humain** | placeholder posé et mergé, ticket ouvert jusqu'au vrai asset ; `todo:art` pour retenter |
 
 Labels transverses, jamais lus comme état : `origin:qa`, `origin:post-launch` (d'où vient le ticket),
 `priority:high` (passe devant), `domain:*` n'existe pas — le domaine est dans `todo:*` et reste lisible
