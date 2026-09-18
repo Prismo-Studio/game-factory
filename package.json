@@ -4,7 +4,7 @@
   "type": "module",
   "engines": { "node": ">=22" },
   "scripts": {
-    "test": "node --test orchestrator/",
+    "test": "node --test \"orchestrator/*.test.mjs\"",
     "run": "node orchestrator/run.mjs",
     "labels": "node orchestrator/run.mjs labels",
     "dashboard": "node dashboard/aggregate.mjs"
