@@ -52,8 +52,8 @@ Sans cle API, le runner peut utiliser un abonnement Pro/Max connecte dans le con
 dans le volume `claude-config`, donc conserves entre rebuilds) :
 
 ```bash
-docker compose exec runner claude login     # affiche une URL : l ouvrir, se connecter, coller le code
-docker compose exec runner claude -p "reponds OK" --output-format text   # doit repondre
+docker compose exec --user runner runner claude login     # --user runner obligatoire : les jobs tournent avec cet utilisateur
+docker compose exec --user runner runner claude -p "reponds OK" --output-format text   # doit repondre
 docker compose exec ollama ollama pull qwen2.5:7b   # modele local pour Triage (14b si 20 Go de RAM)
 ```
 
