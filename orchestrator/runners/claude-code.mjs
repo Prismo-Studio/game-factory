@@ -88,8 +88,8 @@ export async function runClaudeCode({ prompt, cwd, reportFile, logDir, profile =
     // Phase 1 bis : un abonnement Claude connecte sur la machine du runner (`claude login`, identifiants dans
     // ~/.claude) remplace la cle API. Phase 2 : ANTHROPIC_API_KEY (workspace dedie, plafond mensuel).
     const apiKey = env('ANTHROPIC_API_KEY')?.trim();
-    const home = env('HOME') ?? '';
-    const subscription = !apiKey && ['.credentials.json', '.claude.json'].some((file) => existsSync(join(home, '.claude', file)) || existsSync(join(home, file)));
+    const homes = [env('HOME'), '/home/runner'].filter(Boolean);
+    const subscription = !apiKey && homes.some((home) => ['.credentials.json', '.claude.json'].some((file) => existsSync(join(home, '.claude', file)) || existsSync(join(home, file))));
     if (!apiKey && !subscription) {
         writeFileSync(reportFile, JSON.stringify({ status: 'BLOCKED', kind: 'blocked', reason: 'Ni ANTHROPIC_API_KEY ni abonnement Claude connecte sur le runner : l agent ne peut pas demarrer.', actionRequired: 'Poser le secret ANTHROPIC_API_KEY, ou faire `claude login` dans le conteneur du runner.' }, null, 2));
         return { cost: 0, turns: 0, durationS: 0 };

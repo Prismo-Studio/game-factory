@@ -16,7 +16,8 @@ if [[ "$(id -u)" == "0" ]]; then
     done
     mkdir -p /home/runner/runner-config /home/runner/.claude
     chown -R runner:runner /home/runner/actions-runner/_work /home/runner/.local /home/runner/.gradle /home/runner/runner-config /home/runner/.claude
-    exec gosu runner "$0" "$@"
+    # gosu ne change pas HOME : sans cela les jobs (et claude) liraient /root au lieu de /home/runner.
+    exec env HOME=/home/runner gosu runner "$0" "$@"
 fi
 
 : "${GF_RUNNER_TOKEN:?GF_RUNNER_TOKEN requis (Settings > Actions > Runners > New self-hosted runner, ou un PAT admin:org pour generer un token de registration)}"
