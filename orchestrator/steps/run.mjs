@@ -112,6 +112,11 @@ export async function run({ gh, pipeline, ticket, prepared, targetDir, workDir, 
         const schema = JSON.parse(read(join(factoryRoot, pipeline.schema)));
         const user = assemblePrompt({ pipeline: { name: pipeline.name }, ticket, reportFile }).split('## Ticket')[1] ?? '';
         writeFileSync(join(logDir, 'prompt.md'), `${system}\n\n---\n\n${user}`);
+        if (runner === 'interactive') {
+            writeFileSync(join(workDir, 'prompt.md'), `${system}\n\n---\n\n## Ticket${user}\n\n## Schema attendu\n\n${JSON.stringify(schema, null, 2)}`);
+            console.log(`\n=== MODE INTERACTIF (phase 1) ===\nPrompt : ${join(workDir, 'prompt.md')}\nEcris la reponse JSON (avec "status": "SUCCESS") dans ${reportFile}, puis : node orchestrator/run.mjs finalize --work ${workDir}`);
+            return { reportFile, interactive: true };
+        }
         const result = await runLlm({ system, user: `## Ticket${user}`, schema, model: pipeline.model, maxCostUsd: pipeline.budget.maxCostUsd });
         const report = result.data
             ? { status: 'SUCCESS', ...result.data }
