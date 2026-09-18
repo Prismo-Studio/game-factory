@@ -7,8 +7,8 @@
       "kind": "api",
       "name": "Poly Pizza",
       "url": "https://poly.pizza",
-      "api": { "base": "https://api.poly.pizza/v1.1", "auth_header": "x-auth-token", "secret": "GF_POLYPIZZA_KEY", "search": "/search/{keyword}?limit={limit}&page={page}", "model": "/model/{id}" },
-      "notes": "Agregateur low poly (Quaternius, Kenney, Google Poly). Champs : id, title, download (glb), triCount, license, creator, category, attribution. Filtrer license cote client."
+      "api": { "base": "https://api.poly.pizza/v1.1", "auth_header": "x-auth-token", "secret": "GF_POLYPIZZA_KEY", "search": "/search/{keyword}?limit={limit}&format=glb", "model": "/model/{id}" },
+      "notes": "Agregateur low poly (Quaternius, Kenney, Google Poly). Reponse v1.1 : { cursor, results: [{ ID, Title, Download, TriangleCount, Licence (CC0 | CC-BY 4.0), Creator.Username, Thumbnail, Tags }] }. Filtrer Licence cote client, attribution \"Title\" by Username (poly.pizza/u/Username) Licence."
     },
     {
       "id": "kenney",

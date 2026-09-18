@@ -48,11 +48,30 @@ export async function searchPolyPizza(keyword, { limit = 10, fetchImpl = fetch }
     const source = SOURCES.sources.find((item) => item.id === 'polypizza');
     const key = env(source.api.secret);
     if (!key) return { skipped: `secret ${source.api.secret} absent`, results: [] };
-    const url = `${source.api.base}${source.api.search.replace('{keyword}', encodeURIComponent(keyword)).replace('{limit}', String(limit)).replace('{page}', '0')}`;
+    const url = `${source.api.base}${source.api.search.replace('{keyword}', encodeURIComponent(keyword)).replace('{limit}', String(limit))}`;
     const response = await fetchImpl(url, { headers: { [source.api.auth_header]: key } });
     if (!response.ok) throw new Error(`Poly Pizza HTTP ${response.status}`);
     const data = await response.json();
-    return { results: (data.results ?? []).map((model) => ({ id: `polypizza:${model.id}`, name: model.title, download: model.download, triangles: model.triCount, license: model.license, attribution: model.attribution ?? `${model.creator?.name ?? ''} via poly.pizza`, thumbnail: model.thumbnail })) };
+    return { results: (data.results ?? []).map(normalizePolyPizzaModel) };
+}
+
+// Champs de l API v1.1 : ID, Title, Download, TriangleCount, Licence ("CC0" | "CC-BY 4.0"), Creator.Username.
+// Les variantes en minuscules sont acceptees par prudence (docs en beta).
+export function normalizePolyPizzaModel(model) {
+    const pick = (...keys) => keys.map((key) => model[key]).find((value) => value !== undefined && value !== null);
+    const creator = model.Creator ?? model.creator ?? {};
+    const username = creator.Username ?? creator.username ?? creator.name ?? '';
+    const title = pick('Title', 'title') ?? '';
+    const license = pick('Licence', 'License', 'license');
+    return {
+        id: `polypizza:${pick('ID', 'id')}`,
+        name: title,
+        download: pick('Download', 'download'),
+        triangles: pick('TriangleCount', 'triCount', 'triangles'),
+        license,
+        attribution: `"${title}" by ${username} (poly.pizza/u/${username}) ${license ?? ''}`.trim(),
+        thumbnail: pick('Thumbnail', 'thumbnail'),
+    };
 }
 
 export function licenseAllowed(license) {
