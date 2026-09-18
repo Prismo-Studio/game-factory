@@ -62,3 +62,8 @@ test('releases en attente de QA', () => {
     ];
     assert.deepEqual(pendingReleases(releases).map((release) => release.tag_name), ['build-2']);
 });
+
+test('triage ignore les dependances', () => {
+    const triage = pipelineConfig('triage');
+    assert.ok(eligibility(issue(['triage'], 'Depends on #4'), [], triage).ok);
+});

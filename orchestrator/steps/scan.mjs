@@ -19,7 +19,7 @@ export function eligibility(issue, comments, pipeline, { doneNumbers = new Set()
     if (pipeline.name === 'review' && reviewPasses(comments) >= pipeline.budget.maxReviewPasses) {
         return { ok: false, reason: `passes de review epuisees (${pipeline.budget.maxReviewPasses})`, exhaust: true };
     }
-    const deps = dependencies(issue.body).filter((number) => !doneNumbers.has(number));
+    const deps = pipeline.ignoreDependencies ? [] : dependencies(issue.body).filter((number) => !doneNumbers.has(number));
     if (deps.length) return { ok: false, reason: `depend de #${deps.join(', #')} non termine(s)` };
     return { ok: true, priority: labels.includes(PRIORITY_LABEL) ? 1 : 0, attempts: tries };
 }

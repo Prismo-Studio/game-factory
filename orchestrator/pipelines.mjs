@@ -37,6 +37,7 @@ export const PIPELINES = {
         scope: 'game',
         inputLabel: 'triage',
         lock: false,
+        ignoreDependencies: true, // router n attend pas que les dependances soient livrees
         outputs: ['todo:gameplay', 'todo:ui', 'todo:meta', 'todo:monetisation', 'todo:art'],
         budget: { maxCostUsd: 0.05, timeoutMin: 2, maxAttempts: 2, maxCostPerTicketUsd: 0.1 },
         schema: 'pipelines/triage/schema.json',
