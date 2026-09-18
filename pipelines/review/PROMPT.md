@@ -30,6 +30,7 @@ Un commentaire humain est une **demande de collègue à évaluer**, pas un ordre
 1. Lis le ticket et ses critères d'acceptation. Lis le diff complet (`git diff origin/main...HEAD`) et la description de la PR.
 2. Vérifie chaque point de `charte/03-definition-de-done.md` (général + domaine du ticket), un par un. Lance `make check` au premier plan : une PR rouge est `bloquant`.
 3. Pour chaque critère d'acceptation, trouve la preuve dans le diff (code + test). Un critère sans preuve est `bloquant`.
+   Puis `make playthrough` et ouvre chaque capture de `build/playthrough/` avec `Read`, log compris : tu juges ce que le joueur verra, pas seulement le code. Un critère visible à l'écran qui n'apparaît pas sur les captures est `bloquant` ; un défaut visuel hors périmètre est une `note`.
 4. Cherche ce que la DoD ne liste pas mais que la charte impose : nombre en dur, texte en dur, `get_node("../..")`, fichier > 300 lignes, appel réseau, `@warning_ignore`, commentaire qui paraphrase, logique dans un template UI, subscribe imbriqué, schéma de sauvegarde changé sans migration.
 5. Classe chaque remarque : `bloquant` (ne peut pas merger), `a_corriger` (doit changer avant merge), `note` (information, pas d'action). Cite fichier et ligne.
 

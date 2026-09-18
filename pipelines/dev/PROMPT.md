@@ -28,10 +28,11 @@ Tu implémentes un ticket dans le repo d'un jeu Godot 4 déjà cloné. Tu travai
 2. **Chercher avant d'écrire.** Ce que le ticket demande existe peut-être déjà dans le template (`game/core/`, `game/ui/`) ou dans le jeu. Grep les noms du ticket, lis les scènes voisines, copie leurs patterns. Une nouvelle abstraction n'est justifiée que si rien d'existant ne fait l'affaire.
 3. **Plan minimal** : le changement, ses tests, rien d'autre. Ce que tu repères à côté (dette, bug voisin) va dans `notes`, pas dans le diff.
 4. **Implémenter**, en respectant `charte/04-conventions.md` : GDScript typé, valeurs d'équilibrage dans `game/data/*.tres`, textes via `tr()` et `game/i18n/en.csv`, signaux plutôt que références montantes, pas de nombre magique, pas de commentaire qui paraphrase, fichiers < 300 lignes.
-5. **Tester** : un test GUT par comportement livré (`tests/unit/` ou `tests/gameplay/`), une fixture de sauvegarde si le schéma change. Un ticket purement visuel : une capture `make screenshot SCENE=…` référencée dans le rapport.
-6. **Vérifier** avec `make check`, au premier plan. Si ça échoue : au maximum **3 tentatives de correction au total**, puis `BLOCKED`. Ne corrige que ce que tu as cassé ; si `main` était déjà rouge sur un point, note-le et n'y touche pas. Jamais de test désactivé, d'assertion affaiblie ou de `@warning_ignore` pour faire passer.
-7. **Commiter** une seule fois, à la toute fin : `feat(#N): résumé impératif en anglais`, corps en anglais (quoi et pourquoi, 2 à 5 lignes), `Closes #N`. Vérifie avec `git log --oneline origin/main..HEAD` : une seule ligne.
-8. **Rapport** (obligatoire, voir plus bas).
+5. **Tester** : un test GUT par comportement livré (`tests/unit/` ou `tests/gameplay/`), une fixture de sauvegarde si le schéma change.
+6. **Regarder ce que verra le joueur** : `make playthrough` fait jouer un bot 20 s et capture l'écran toutes les 2 s dans `build/playthrough/` (menu, partie, game over) avec un `log.txt` (écrans traversés, score, erreurs). Ouvre **chaque** capture avec `Read` et compare à ce que le ticket promet : élément absent, mal placé, texte qui déborde, écran noir, partie qui ne démarre pas ou qui finit en moins de 3 s sont des défauts à corriger avant de livrer. Si le bot par défaut (un tap toutes les 0,6 s) ne sait pas jouer ton jeu, écris `game/qa/autoplay.gd` (`func tick(t: float, level: Node) -> void`) qui décide des actions à partir de l'état du niveau : c'est du code de jeu, testé comme le reste. Cite les captures dans `checks`.
+7. **Vérifier** avec `make check`, au premier plan. Si ça échoue : au maximum **3 tentatives de correction au total**, puis `BLOCKED`. Ne corrige que ce que tu as cassé ; si `main` était déjà rouge sur un point, note-le et n'y touche pas. Jamais de test désactivé, d'assertion affaiblie ou de `@warning_ignore` pour faire passer.
+8. **Commiter** une seule fois, à la toute fin : `feat(#N): résumé impératif en anglais`, corps en anglais (quoi et pourquoi, 2 à 5 lignes), `Closes #N`. Vérifie avec `git log --oneline origin/main..HEAD` : une seule ligne.
+9. **Rapport** (obligatoire, voir plus bas).
 
 ## Definition of done
 

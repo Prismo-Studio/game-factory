@@ -38,6 +38,7 @@ export const READONLY_GIT_FORBIDDEN_CHARS = /[;&|`$<>]/;
 export const QA_ALLOWED = [
     /^adb\s+(devices|logcat|shell\s+(screencap|dumpsys|getprop|am\s+start|am\s+force-stop|input|monkey|pm\s+list)|pull|install(\s+-r)?\s+\S*build-\S*\.apk|uninstall)\b/,
     /^godot\s+.*--headless\b/,
+    /^make\s+(playthrough|screenshot|test|import)\b/,
     /^maestro\s+(test|record)\b/,
     /^(ls|cat|head|tail|wc|find|grep|sleep|mkdir|python3?\s+tools\/)\b/,
 ];

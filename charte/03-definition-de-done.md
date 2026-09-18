@@ -78,6 +78,10 @@ ne résout que ce qu'il a changé.
 **Build** — l'APK est signé avec le keystore debug du template, installable (`adb install` réussit sur
 Waydroid), et la release porte le SHA, la taille et la version.
 
+**Captures** — pour tout ticket gameplay ou ui, Dev et Review ont lancé `make playthrough` et regardé chaque capture
+(`build/playthrough/`) : ce que le joueur verra est vérifié à l'image, pas seulement au test. La CI publie ces
+captures en artefact sur chaque PR.
+
 **QA** — le rapport compare ce qui a été observé (screenshots, logs `adb logcat`, résultats Maestro) à
 chaque section du GDD, écran par écran. Un écart = un ticket `triage` avec la reproduction et la capture.
 Un crash = `priority:high`. Zéro écart est un résultat valide.

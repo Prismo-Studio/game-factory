@@ -32,9 +32,13 @@ Un build APK vient d'être publié. Tu l'installes sur l'appareil de test (Waydr
 
 Section QA de `charte/03-definition-de-done.md` : chaque écart observé a une reproduction, une capture ou un extrait de log, et une sévérité. Zéro écart est un résultat valide s'il est prouvé (captures de chaque étape).
 
+## Sans appareil : mode bureau
+
+Si `adb devices` ne liste aucun appareil, tu ne bloques pas : tu passes en mode bureau. `make playthrough DURATION=40` fait jouer un bot (ou `game/qa/autoplay.gd` s'il existe) et capture l'écran toutes les 2 s dans `build/playthrough/`, avec `log.txt` (écrans, score, erreurs de script). Ouvre chaque capture avec `Read`, lis le log, et compare au GDD exactement comme aux étapes 5 et 6. Les captures s'appellent alors `build/playthrough/NN-<t>s.png` dans le rapport, et `verdict` reste `unverified` si le bot n'a pas atteint le game over ni dépassé 20 s de jeu. Ce mode ne voit ni les performances réelles, ni les pubs, ni le tactile : dis-le dans `summary`.
+
 ## Blocage
 
-`BLOCKED` (`kind: blocked`) si aucun appareil n'est disponible ou si l'APK n'est pas installable pour une raison d'infrastructure (pas de signature, ABI incompatible). Dans ce cas dis exactement ce qui manque.
+`BLOCKED` (`kind: blocked`) uniquement si l'APK n'est pas installable pour une raison d'infrastructure (pas de signature, ABI incompatible) **et** que le mode bureau échoue aussi (aucune capture produite). Dans ce cas dis exactement ce qui manque.
 
 ## Sortie
 
