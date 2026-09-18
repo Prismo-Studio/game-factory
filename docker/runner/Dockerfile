@@ -17,7 +17,7 @@ ENV DEBIAN_FRONTEND=noninteractive \
     PATH=/opt/android-sdk/cmdline-tools/latest/bin:/opt/android-sdk/platform-tools:/opt/godot:$PATH
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-        ca-certificates curl git jq unzip zip python3 python3-pip make \
+        ca-certificates curl git jq unzip zip python3 python3-pip make gosu \
         openjdk-17-jdk-headless libfontconfig1 libgl1 libxcursor1 libxinerama1 libxrandr2 libxi6 \
         libasound2t64 libpulse0 xvfb \
     && curl -fsSL "https://deb.nodesource.com/setup_${NODE_MAJOR}.x" | bash - \
@@ -59,6 +59,6 @@ RUN set -eux; useradd --create-home --shell /bin/bash runner; mkdir -p /home/run
     cp -r /root/.local /home/runner/.local; chown -R runner:runner /home/runner
 
 COPY --chmod=0755 entrypoint.sh /usr/local/bin/entrypoint.sh
-USER runner
+# Demarre root pour reprendre les droits sur les volumes, puis bascule sur `runner` (gosu) : voir entrypoint.sh.
 WORKDIR /home/runner
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]

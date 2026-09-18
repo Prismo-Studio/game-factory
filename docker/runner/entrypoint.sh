@@ -4,6 +4,14 @@
 # les caches Godot/Gradle survivent, c est voulu.
 set -euo pipefail
 
+# Les volumes Docker (_work, caches Godot/Gradle) sont crees par root : on les rend a `runner`
+# puis on se re-execute sous cet utilisateur. Le runner lui-meme ne tourne jamais en root.
+if [[ "$(id -u)" == "0" ]]; then
+    mkdir -p /home/runner/actions-runner/_work /home/runner/.local/share/godot /home/runner/.gradle
+    chown -R runner:runner /home/runner/actions-runner/_work /home/runner/.local /home/runner/.gradle
+    exec gosu runner "$0" "$@"
+fi
+
 : "${GF_RUNNER_TOKEN:?GF_RUNNER_TOKEN requis (Settings > Actions > Runners > New self-hosted runner, ou un PAT admin:org pour generer un token de registration)}"
 GF_RUNNER_URL="${GF_RUNNER_URL:-https://github.com/Prismo-Studio}"
 GF_RUNNER_NAME="${GF_RUNNER_NAME:-gf-$(hostname)}"
