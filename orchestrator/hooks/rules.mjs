@@ -5,7 +5,7 @@ export const FORBIDDEN_COMMANDS = [
     { pattern: /--no-verify\b/i, reason: 'contourner les hooks git est interdit' },
     { pattern: /\bgit\s+config\s+--global\b/i, reason: 'configuration git globale interdite' },
     { pattern: /\bgit\s+remote\b/i, reason: 'modification des remotes interdite' },
-    { pattern: /\bgit\s+(checkout|switch)\s+(-{1,2}\S+\s+)*(main|master)\b/i, reason: 'tu dois rester sur ta branche' },
+    { pattern: /\bgit\s+(checkout|switch)\s+(-{1,2}\S+\s+)*(main|master|develop)\b/i, reason: 'tu dois rester sur ta branche' },
     { pattern: /\bgit\s+(reset|clean)\s+.*(--hard|-fdx?)\b/i, reason: 'reset/clean destructif interdit' },
     { pattern: /\bgit\s+cat-file\b|\.git[\/\\]config/i, reason: 'lecture de la configuration git interdite' },
     { pattern: /\b(curl|wget|nc|ncat|ssh|scp|Invoke-WebRequest)\b/i, reason: 'aucun appel reseau sortant autorise' },

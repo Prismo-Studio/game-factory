@@ -109,14 +109,14 @@ Sans `report.json`, `finalize` fabrique un `BLOCKED` avec la dernière sortie du
 | 4 | Triage | llm | jeu | `triage` | `todo:<domaine>` ; `needs-human` si indécidable | `gf:triage` |
 | 5 | Dev | claude-code write | jeu | `todo:gameplay/ui/meta/monetisation` | PR + `review` | `gf:run` |
 | 6 | Review + autofix | claude-code write | jeu | `review` | `review:handled` (verdict OK) ; garde `review` après une correction ; `needs-human` après N passes | `gf:review sha=`, `gf:autofix from= to=` |
-| 7 | Build | script | jeu | push sur `main` / dispatch | Release `build-<n>` avec l'APK debug signé, `gf:build` | tag de release |
+| 7 | Build | script | jeu | push sur `main` (release) ou `develop` (artefact) | Release `build-<n>` avec l'APK debug signé, `gf:build` | tag de release |
 | 8 | QA | claude-code read-only + adb | jeu | nouvelle release `build-*` | commentaire de release ; issues `triage` + `origin:qa` pour chaque écart au GDD | `gf:qa build=` |
 | 9 | Assets | claude-code write + Blender | jeu | `todo:art` | PR + `review` ; ou placeholder + `needs-human:art` | `gf:run`, `gf:asset name=` |
 | 10 | Post-launch | plus tard | jeu | stats stores / AdMob | issues `triage` + `origin:post-launch` | `gf:postlaunch` |
 
 Workflows déterministes sans modèle, dans chaque repo de jeu (copiés par le template) :
 `on-pr-merged` → `done` ; `on-human-review` → `review:handled` redevient `review` ;
-`on-approve` → une approbation GitHub par un humain pose `approved` ; `ci` → tests headless + export sur chaque PR.
+`ci` → `make check` sur chaque PR ; `merge-gate` → règles de branche et de contenu ; `auto-merge` → merge quand tout est vert et le label posé ; `promote` → PR `develop → main` ; `guard-direct-push` → détecte un push sans PR.
 
 ## Ce qu'une pipeline ne fait jamais
 

@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { commandDenial, pathDenial, qaBashDenial, readonlyBashDenial } from './hooks/rules.mjs';
 
 test('profil write : commandes interdites', () => {
-    for (const command of ['git push origin main', 'git commit --no-verify', 'curl https://x', 'npm install foo', 'apt-get install x', 'git checkout main', 'git reset --hard', 'adb devices', 'godot --export-release Android x.apk']) {
+    for (const command of ['git push origin main', 'git commit --no-verify', 'curl https://x', 'npm install foo', 'apt-get install x', 'git checkout main', 'git switch develop', 'git reset --hard', 'adb devices', 'godot --export-release Android x.apk']) {
         assert.ok(commandDenial(command, { profile: 'write' }), `devrait refuser : ${command}`);
     }
 });

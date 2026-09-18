@@ -4,7 +4,7 @@ import { execFileSync } from 'node:child_process';
 import { isDryRun, slugify, warn } from '../lib/env.mjs';
 import { FACTORY_EMAIL, FACTORY_NAME, git, gitStream } from '../lib/git.mjs';
 import { buildTrace, truncate } from '../lib/traces.mjs';
-import { GAME_TOPIC, LOCK_LABEL } from '../pipelines.mjs';
+import { BASE_BRANCH, GAME_TOPIC, LOCK_LABEL } from '../pipelines.mjs';
 import { syncLabels } from '../labels.mjs';
 
 // Bootstrap : concept:approved → repo depuis game-template, renommage, labels, issue spec.
@@ -46,12 +46,22 @@ export async function bootstrap({ gh, org, pipeline, ticket, workDir }) {
         git(['remote', 'set-url', 'origin', gh.publicUrl(repo)], targetDir);
         git(['config', 'user.name', FACTORY_NAME], targetDir);
         git(['config', 'user.email', FACTORY_EMAIL], targetDir);
-        const alreadyNamed = git(['grep', '-l', packageName, '--', 'export_presets.cfg'], targetDir).length > 0;
+        let alreadyNamed = false;
+        try {
+            alreadyNamed = git(['grep', '-l', packageName, '--', 'export_presets.cfg'], targetDir).length > 0;
+        } catch {
+            alreadyNamed = false; // git grep sort en 1 quand rien ne correspond
+        }
         if (!alreadyNamed) {
             execFileSync('bash', ['tools/bootstrap.sh', displayName, packageName, slug], { cwd: targetDir, stdio: 'inherit' });
             git(['add', '-A'], targetDir);
             git(['commit', '-q', '-m', `chore: bootstrap ${slug} from game-template`, '-m', `Package ${packageName}. Concept: ${ticket.url}`], targetDir);
             git(['push', gh.cloneUrl(repo), 'HEAD:refs/heads/main'], targetDir);
+        }
+        // Branche d integration : les PR de la factory la visent, main ne bouge que par promotion.
+        if (!git(['ls-remote', gh.cloneUrl(repo), `refs/heads/${BASE_BRANCH}`], targetDir)) {
+            git(['push', gh.cloneUrl(repo), `HEAD:refs/heads/${BASE_BRANCH}`], targetDir);
+            console.log(`Branche ${BASE_BRANCH} creee.`);
         }
 
         const existingSpec = await gh.listIssues(repo, { labels: ['spec'], state: 'all' });

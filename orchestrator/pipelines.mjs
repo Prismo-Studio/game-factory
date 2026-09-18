@@ -86,6 +86,8 @@ export const PIPELINES = {
     },
 };
 
+export const BASE_BRANCH = env('GF_BASE_BRANCH') ?? 'develop';
+export const RELEASE_BRANCH = 'main';
 export const LOCK_LABEL = 'in-progress';
 export const EXCLUDED_LABELS = ['in-progress', 'approved', 'done', 'blocked', 'needs-human'];
 export const PAUSE_LABEL = 'factory:paused';

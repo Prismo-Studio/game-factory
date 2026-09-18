@@ -16,7 +16,7 @@ rôle de l'usine n'en a besoin. La liste vit dans `orchestrator/runners/claude-c
 ## Profil `write` — hook `guard-write.mjs`
 
 Bash refusé si la commande contient :
-`git push`, `--no-verify`, `git config --global`, `git remote`, `git checkout|switch main`,
+`git push`, `--no-verify`, `git config --global`, `git remote`, `git checkout|switch main|develop`,
 `git reset --hard`, `git clean -f`, `curl|wget|nc|ssh`, `rm -rf /` ou `~`, `adb` (réservé à QA),
 `godot --export-release`, toute installation (`apt`, `pip`, `npm i`, téléchargement d'addon),
 `run_in_background: true`.
@@ -39,7 +39,7 @@ jamais `adb install` d'autre chose que l'APK de la release, jamais `adb shell rm
 
 ## Ce que `finalize` vérifie avant de pousser
 
-- HEAD est sur la branche attendue, un seul commit au-dessus de `origin/main` (sinon squash).
+- HEAD est sur la branche attendue, un seul commit au-dessus de `origin/develop` (sinon squash).
 - Aucun fichier protégé dans le diff (seconde vérification, indépendante du hook).
 - Aucun fichier > 2 Mo. Aucun `.import` orphelin. Aucune chaîne ressemblant à un secret
   (`sk-ant-`, `AIza`, `ca-app-pub-` hors identifiants de test).

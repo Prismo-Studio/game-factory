@@ -94,9 +94,27 @@ Spec : `needs-human` sur les tickets concernés.
 **Ordre de prise.** `priority:high` d'abord, puis le plus ancien. Un seul ticket par run, un run par
 runner à la fois (concurrence GitHub Actions par pipeline).
 
-**PR.** Une PR par ticket, une branche `<type>/<N>-<slug>` depuis `main`, un seul commit au moment du
-push (squash par `finalize`), `Closes #N`, marqueur `<!-- gf:pr ticket=N pipeline=dev -->` en fin de
-description. Une PR sans marqueur est humaine, aucune pipeline n'y touche.
+**PR.** Une PR par ticket, une branche `<type>/<N>-<slug>` depuis `develop`, vers `develop`, un seul
+commit au moment du push (squash par `finalize`), `Closes #N`, marqueur `<!-- gf:pr ticket=N pipeline=dev -->`
+en fin de description. Une PR humaine suit le gabarit `.github/pull_request_template.md` du jeu. Deux
+checks sont requis avant tout merge : `check` (CI, `make check`) et `gate` (`merge-gate` : bonne branche
+de base, `Closes #N`, marqueur, aucun fichier protégé sans le label `template-change`).
+
+**Branches.** `develop` = intégration, `main` = release. `main` ne bouge que par la PR de promotion
+`develop → main` ouverte par `promote.yml` (chaque soir s'il y a du nouveau, ou à la demande) et
+mergée par un humain, ou par la factory si `auto-merge` est posé dessus. `hotfix/*` peut viser `main`.
+Chaque merge sur `main` produit une Release `build-N` que QA teste ; un merge sur `develop` produit
+seulement un APK en artefact.
+
+**Auto-merge.** Un humain qui veut que la factory aille jusqu'au bout pose `auto-merge` sur le ticket
+(propagé à la PR par `finalize`) ou directement sur la PR. `auto-merge.yml` merge en squash quand :
+`check` et `gate` sont verts, aucune review humaine « changes requested » n'est en attente, et le ticket
+est `review:handled` ou `approved`. Sans ce label, le merge reste un geste humain.
+
+**Push direct.** Tant que les repos sont privés sur une org gratuite, GitHub ne peut pas interdire un
+push direct sur `main`/`develop` ; `guard-direct-push.yml` le détecte et ouvre une issue `needs-human`.
+Les rulesets prêts (`game-template/.github/rulesets/`) s'appliquent avec
+`orchestrator/apply-rulesets.mjs` dès que le repo est public ou l'org en Pro.
 
 **Retour humain sur une PR.** Une review humaine « changes requested » ou un commentaire humain non
 suivi d'une réponse `[gf]` sur une PR `review:handled` la remet en `review` (workflow déterministe).

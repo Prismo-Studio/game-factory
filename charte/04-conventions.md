@@ -7,7 +7,8 @@ de pipeline, charte : **français**. Les clés i18n sont en anglais, les textes 
 
 ## Git
 
-- Branche par ticket depuis `main` fraîchement fetché : `feat/14-slug`, `fix/14-slug`, `art/14-slug`,
+- `develop` = intégration (cible des PR de tickets), `main` = release (promotion `develop → main` par PR).
+- Branche par ticket depuis `develop` fraîchement fetché : `feat/14-slug`, `fix/14-slug`, `art/14-slug`,
   `spec/…` n'existe pas (Spec n'écrit pas de code).
 - Un commit par PR au moment du push. `finalize` squashe. Pas de commit de merge : rebase.
 - Commit : `<type>(#<N>): <impératif, une ligne>` puis corps (cause, changement, 2 à 5 lignes),
@@ -15,7 +16,7 @@ de pipeline, charte : **français**. Les clés i18n sont en anglais, les textes 
 - PR : titre en français, corps = ce que ça change pour le joueur, critères d'acceptation cochés un par
   un avec la preuve, commandes lancées et résultat, notes hors périmètre, puis
   `<!-- gf:pr ticket=N pipeline=dev -->`.
-- Jamais de push sur `main`. Jamais de `--force` hors `--force-with-lease` par `finalize` sur une branche
+- Jamais de push sur `main` ni `develop`. Jamais de `--force` hors `--force-with-lease` par `finalize` sur une branche
   dont le dernier commit est celui de la factory (`factory@prismo.studio`). Si un humain a commité sur la
   branche, la pipeline s'arrête.
 - Aucun fichier binaire > 2 Mo dans un commit : Release ou disque + référence.

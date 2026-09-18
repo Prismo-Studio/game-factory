@@ -146,6 +146,8 @@ async function finalizePullRequest({ gh, pipeline, ticket, prepared, report, sta
     const title = truncate(report.prTitle ?? `#${ticket.number} — ${ticket.title}`, 200);
     const pull = existing ? await gh.request('PATCH', `/repos/${ticket.repo}/pulls/${existing.number}`, { title, body }) : await gh.createPull(ticket.repo, { head: branch, base: prepared.base, title, body });
     console.log(`PR : ${gh.pullUrl(ticket.repo, pull.number)}`);
+    // Un humain a pose auto-merge sur le ticket : la PR merge seule quand ci + merge-gate + review passent.
+    if (ticket.labels.includes('auto-merge')) await gh.addLabels(ticket.repo, pull.number, ['auto-merge']);
 
     const extra = { pr: pull.number, sha: git(['rev-parse', '--short', 'HEAD'], targetDir) };
     await gh.comment(ticket.repo, ticket.number, [ownerComment({ pipeline, ticket, stats, status: 'SUCCESS', headline: `${pipeline.name} · tentative ${ticket.attempt} · PR #${pull.number} ${existing ? 'mise a jour' : 'ouverte'} · ${files.length} fichier(s)`, detail: report.summary, extra }), buildTrace('pr', { number: pull.number })].join('\n'));

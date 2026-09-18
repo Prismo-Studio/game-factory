@@ -1,6 +1,7 @@
 import { existsSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { FACTORY_EMAIL, FACTORY_NAME, git, gitStream, isAllowedBranch } from '../lib/git.mjs';
+import { BASE_BRANCH } from '../pipelines.mjs';
 
 // Clone neuf, depth 1, remote nettoye du token (charte 07 : l agent lit avec Read, qui
 // ignore les fichiers proteges d un hook Bash — .git/config exposerait le token).
@@ -10,7 +11,7 @@ export async function prepare({ gh, ticket, pipeline, targetDir }) {
 
     const pull = ticket.pullRequest ? await gh.getPull(ticket.repo, ticket.pullRequest) : null;
     const branch = pull ? pull.head.ref : ticket.branch;
-    const base = 'main';
+    const base = pull ? pull.base.ref : BASE_BRANCH;
 
     console.log(`Clone de ${ticket.repo} (${pull ? branch : base}) vers ${targetDir}`);
     gitStream(['clone', '--branch', pull ? branch : base, '--depth', '50', '--no-tags', '--quiet', gh.cloneUrl(ticket.repo), targetDir]);
