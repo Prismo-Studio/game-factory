@@ -29,6 +29,8 @@ on:
         required: true
       ANTHROPIC_API_KEY:
         required: false
+      GF_POLYPIZZA_KEY:
+        required: false
 
 jobs:
   run:
@@ -44,6 +46,7 @@ jobs:
         env:
           GF_GITHUB_TOKEN: ${{ secrets.GF_GITHUB_TOKEN }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          GF_POLYPIZZA_KEY: ${{ secrets.GF_POLYPIZZA_KEY }}
           GF_ORG: ${{ github.repository_owner }}
           GF_ENABLED: ${{ vars.GF_ENABLED || 'true' }}
           GF_CHAIN: ${{ vars.GF_CHAIN || 'true' }}

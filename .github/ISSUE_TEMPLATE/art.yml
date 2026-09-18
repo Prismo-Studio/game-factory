@@ -46,3 +46,9 @@ body:
       description: Jamais « comme dans <jeu connu> ».
     validations:
       required: true
+  - type: input
+    id: search
+    attributes:
+      label: Recherche (mots-cles anglais, separes par des virgules)
+      description: Ce que la pipeline Assets tape dans les bibliotheques CC0 (Poly Pizza, Kenney). Ex. « wooden barrel, barrel ».
+      placeholder: wooden barrel, barrel

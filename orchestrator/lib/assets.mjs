@@ -17,7 +17,12 @@ export function parseArtTicket(body) {
     const pivot = (field('Pivot') ?? '').match(/bottom_center|center/)?.[0] ?? 'bottom_center';
     const collision = (field('Collision') ?? '').match(/box|cylinder|sphere|mesh|none/)?.[0] ?? 'box';
     const usage = field('Usage') ?? '';
-    const keywords = [...new Set([...(name ?? '').split('_'), ...usage.toLowerCase().split(/[^a-z]+/)].filter((word) => word.length > 3 && !['avec', 'pour', 'dans', 'plateforme', 'placeholder', 'small', 'large', 'deco'].includes(word)))];
+    // Ordre de recherche : mots-cles anglais explicites (champ Recherche), puis le nom snake_case (anglais par
+    // convention), puis les mots de l usage (francais : rarement utiles sur une API anglophone, en dernier).
+    const explicit = (field('Recherche') ?? '').toLowerCase().split(/[,;]+/).map((word) => word.trim()).filter(Boolean);
+    const nameParts = (name ?? '').split('_').filter((word) => word.length > 2 && !['small', 'large', 'deco', 'player', 'pickup'].includes(word));
+    const usageWords = usage.toLowerCase().split(/[^a-z]+/).filter((word) => word.length > 3 && !['avec', 'pour', 'dans', 'plateforme', 'placeholder', 'small', 'large', 'deco'].includes(word));
+    const keywords = [...new Set([...explicit, ...nameParts, ...usageWords])];
     return {
         name,
         category,
@@ -72,7 +77,7 @@ export async function findAsset(query, { maxTriangles = 2000, fetchImpl = fetch 
         attempts.push({ source: asset.id, triangles: stats.triangles });
         if (stats.triangles <= maxTriangles) return { candidate: { ...asset, license: asset.license ?? 'CC0' }, buffer, stats, scale: query.size ? fitScale(stats.size, query.size) : 1, attempts };
     }
-    for (const keyword of query.keywords.slice(0, 3)) {
+    for (const keyword of query.keywords.slice(0, 4)) {
         const { results, skipped } = await searchPolyPizza(keyword, { fetchImpl });
         if (skipped) {
             attempts.push({ source: 'polypizza', skipped });

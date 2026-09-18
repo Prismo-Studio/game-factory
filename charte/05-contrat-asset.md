@@ -66,7 +66,9 @@ vérifie que les bounds et les points d'attache n'ont pas bougé de plus que la 
 
 Nom, catégorie, dimensions cibles, pivot, points d'attache attendus, slots de palette, usage en jeu
 (une phrase), référence visuelle en mots (jamais « comme dans <jeu connu> », plutôt « cylindre trapu,
-deux cerclages »). Un ticket art sans dimensions ne passe pas Triage : `needs-human`.
+deux cerclages »), et une ligne `Recherche :` de 2 à 4 mots-clés anglais séparés par des virgules, du plus
+précis au plus générique (`wooden barrel, barrel`) : c'est ce que la pipeline Assets tape dans les
+bibliothèques CC0 (Poly Pizza, Kenney). Un ticket art sans dimensions ne passe pas Triage : `needs-human`.
 
 ## Ce qui reste humain
 
