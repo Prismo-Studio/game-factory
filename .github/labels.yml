@@ -1,0 +1,85 @@
+# Source de vérité des labels. Appliqué sur game-factory et sur chaque repo de jeu par Bootstrap
+# (orchestrator/labels.mjs sync). Toute modification ici est répercutée partout au prochain sync.
+
+# --- file des concepts (game-factory uniquement) ---
+- name: concept
+  color: "c5def5"
+  description: "Idée générée, en attente de validation humaine"
+- name: concept:approved
+  color: "0e8a16"
+  description: "Validé par un humain : Bootstrap va créer le repo"
+- name: concept:bootstrapped
+  color: "5319e7"
+  description: "Repo créé, lien dans le commentaire gf:bootstrap"
+- name: concept:rejected
+  color: "e4e669"
+  description: "Refusé, jamais relu"
+
+# --- machine à états d'un ticket de jeu ---
+- name: spec
+  color: "1d76db"
+  description: "Issue GDD à découper en tickets"
+- name: spec:done
+  color: "0052cc"
+  description: "GDD découpé, les enfants existent"
+- name: triage
+  color: "fbca04"
+  description: "Ticket enfant à router vers un domaine"
+- name: todo:gameplay
+  color: "0e8a16"
+  description: "Prêt à développer — boucle de jeu"
+- name: todo:ui
+  color: "0e8a16"
+  description: "Prêt à développer — écrans et HUD"
+- name: todo:meta
+  color: "0e8a16"
+  description: "Prêt à développer — progression, sauvegarde, économie"
+- name: todo:monetisation
+  color: "0e8a16"
+  description: "Prêt à développer — pubs, remove ads, placements"
+- name: todo:art
+  color: "d4c5f9"
+  description: "Prêt à produire un asset"
+- name: in-progress
+  color: "bfdadc"
+  description: "Verrou : une pipeline travaille dessus"
+- name: review
+  color: "f9d0c4"
+  description: "PR ouverte, relecture machine à faire"
+- name: review:handled
+  color: "e99695"
+  description: "Relu par la machine, au tour de l'humain"
+- name: approved
+  color: "0e8a16"
+  description: "Validé par un humain, plus aucune pipeline n'y touche"
+- name: done
+  color: "ededed"
+  description: "PR mergée"
+
+# --- sorties latérales ---
+- name: blocked
+  color: "b60205"
+  description: "Prérequis externe manquant, un humain doit débloquer"
+- name: needs-human
+  color: "b60205"
+  description: "Tentatives ou budget épuisés, ou décision à prendre"
+- name: needs-human:art
+  color: "d93f0b"
+  description: "Placeholder posé, un vrai asset est attendu"
+
+# --- transverses (jamais lus comme état) ---
+- name: origin:qa
+  color: "c2e0c6"
+  description: "Créé par la pipeline QA"
+- name: origin:post-launch
+  color: "c2e0c6"
+  description: "Créé par la pipeline Post-launch"
+- name: priority:high
+  color: "d93f0b"
+  description: "Passe devant dans le scan"
+- name: reset
+  color: "ffffff"
+  description: "Humain : réinitialise le compteur de tentatives au prochain scan"
+- name: factory:paused
+  color: "000000"
+  description: "Sur l'issue épinglée du jeu : ce repo est ignoré par toutes les pipelines"
