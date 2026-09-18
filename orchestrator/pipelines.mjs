@@ -76,7 +76,7 @@ export const PIPELINES = {
         budget: { maxCostUsd: 8, timeoutMin: 45, maxAttempts: 1, maxCostPerTicketUsd: 8 },
     },
     assets: {
-        runner: 'claude-code',
+        runner: 'script',      // cascade CC0 → placeholder ; Blender (claude-code) plus tard sous label art:hero
         profile: 'write',
         scope: 'game',
         inputLabel: 'todo:art',

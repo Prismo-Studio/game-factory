@@ -6,10 +6,15 @@ prefab `<nom>.tscn` généré à côté, qui encapsule le mesh, le pivot et les 
 permet de remplacer un placeholder par le vrai asset sans toucher au code : on dépose un nouveau `.glb`
 respectant le même contrat, le prefab reste valide.
 
-Le pipeline de production (Blender headless, bibliothèque CC0, génération IA) n'est pas décidé. Le
-contrat, lui, est stable : tout ce qui produit un asset — pipeline, humain, script — le respecte. En
-attendant la pipeline Assets, chaque ticket `todo:art` aboutit à un placeholder conforme et
-`needs-human:art`.
+La production suit une cascade, du moins cher au plus cher (registre dans `assets/sources.json`) :
+1. **Bibliothèque CC0 locale** (packs Kenney, Quaternius déposés sur la VM et indexés) ;
+2. **Poly Pizza** (API, CC0 / CC-BY, budget de triangles de la catégorie) ; le modèle trouvé est mis à
+   l'échelle et pivoté par le prefab, jamais modifié ;
+3. **Placeholder** conforme + `needs-human:art` si rien ne convient ;
+4. **Blender headless** (scripts bpy, rendu de contrôle, 3 tours) uniquement pour les assets marqués
+   `art:hero`, plus tard.
+La génération 3D par IA n'entre pas dans la boucle. Le contrat, lui, est stable : tout ce qui produit un
+asset — pipeline, humain, script — le respecte. Les attributions CC-BY vont dans `game/CREDITS.md`.
 
 ## Style
 

@@ -1,0 +1,49 @@
+{
+  "_doc": "Registre des sources d assets (charte 05). Ordre = ordre de recherche de la pipeline Assets. Une source `api` est interrogee au runtime ; une source `pack` est telechargee une fois sur la VM et indexee (orchestrator/assets-index.mjs) dans assets/index.json.",
+  "style": { "license_allow": ["CC0", "CC-BY"], "max_triangles_default": 2000, "formats": ["glb", "gltf"] },
+  "sources": [
+    {
+      "id": "polypizza",
+      "kind": "api",
+      "name": "Poly Pizza",
+      "url": "https://poly.pizza",
+      "api": { "base": "https://api.poly.pizza/v1.1", "auth_header": "x-auth-token", "secret": "GF_POLYPIZZA_KEY", "search": "/search/{keyword}?limit={limit}&page={page}", "model": "/model/{id}" },
+      "notes": "Agregateur low poly (Quaternius, Kenney, Google Poly). Champs : id, title, download (glb), triCount, license, creator, category, attribution. Filtrer license cote client."
+    },
+    {
+      "id": "kenney",
+      "kind": "pack",
+      "name": "Kenney",
+      "url": "https://kenney.nl/assets",
+      "license": "CC0",
+      "packs": ["platformer-kit", "nature-kit", "racing-kit", "city-kit-suburban", "space-kit", "food-kit", "mini-characters-1", "blocky-characters", "castle-kit", "pirate-kit", "tower-defense-kit", "holiday-kit"],
+      "notes": "Zip par pack, dossier Models/GLTF format/*.glb. Style flat exactement celui de la charte. A telecharger sur la VM dans $GF_ASSET_LIBRARY/kenney/<pack>/."
+    },
+    {
+      "id": "quaternius",
+      "kind": "pack",
+      "name": "Quaternius",
+      "url": "https://quaternius.com",
+      "license": "CC0",
+      "packs": ["ultimate-animated-character-pack", "ultimate-modular-vehicles", "ultimate-nature-pack", "ultimate-food-pack", "ultimate-platformer-pack", "ultimate-space-kit", "cube-world-kit"],
+      "notes": "Zip par pack, glTF/glb inclus. Persos animes. $GF_ASSET_LIBRARY/quaternius/<pack>/."
+    },
+    {
+      "id": "polyhaven",
+      "kind": "api",
+      "name": "Poly Haven",
+      "url": "https://polyhaven.com",
+      "api": { "base": "https://api.polyhaven.com", "search": "/assets?t=models", "files": "/files/{id}" },
+      "enabled": false,
+      "notes": "CC0 mais realiste/PBR : hors style. Garde pour les HDRI d eclairage uniquement."
+    },
+    {
+      "id": "sketchfab",
+      "kind": "api",
+      "name": "Sketchfab",
+      "url": "https://sketchfab.com/developers",
+      "enabled": false,
+      "notes": "Licences melangees, topologie variable : jamais en automatique."
+    }
+  ]
+}

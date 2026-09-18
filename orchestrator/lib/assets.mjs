@@ -1,0 +1,91 @@
+import { existsSync, readFileSync } from 'node:fs';
+import { dirname, join, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { env } from './env.mjs';
+import { glbStats, fitScale } from './glb.mjs';
+
+const here = dirname(fileURLToPath(import.meta.url));
+export const SOURCES = JSON.parse(readFileSync(resolve(here, '..', '..', 'assets', 'sources.json'), 'utf8'));
+
+// --- ticket art → requete ---
+export function parseArtTicket(body) {
+    const text = String(body ?? '');
+    const field = (label) => text.match(new RegExp(`${label}[^\\n]*?[:：]\\s*\`?([^\\n\`]+)`, 'i'))?.[1]?.trim();
+    const name = (field('Nom') ?? '').match(/[a-z0-9_]+/)?.[0] ?? text.match(/`([a-z0-9_]+)`/)?.[1];
+    const category = (field('Cat[ée]gorie') ?? text.match(/cat[ée]gorie\s*`?(\w+)/i)?.[1] ?? '').toLowerCase().match(/props|characters|vehicles|environment|ui3d/)?.[0];
+    const dims = (field('Dimensions') ?? text).match(/(\d+(?:[.,]\d+)?)\s*[x×]\s*(\d+(?:[.,]\d+)?)\s*[x×]\s*(\d+(?:[.,]\d+)?)/i);
+    const pivot = (field('Pivot') ?? '').match(/bottom_center|center/)?.[0] ?? 'bottom_center';
+    const collision = (field('Collision') ?? '').match(/box|cylinder|sphere|mesh|none/)?.[0] ?? 'box';
+    const usage = field('Usage') ?? '';
+    const keywords = [...new Set([...(name ?? '').split('_'), ...usage.toLowerCase().split(/[^a-z]+/)].filter((word) => word.length > 3 && !['avec', 'pour', 'dans', 'plateforme', 'placeholder', 'small', 'large', 'deco'].includes(word)))];
+    return {
+        name,
+        category,
+        size: dims ? [dims[1], dims[2], dims[3]].map((value) => Number(value.replace(',', '.'))) : null,
+        pivot,
+        collision,
+        keywords,
+    };
+}
+
+// --- source 1 : bibliotheque locale indexee (Kenney, Quaternius) ---
+export function searchLocalIndex(query, index) {
+    const wanted = query.keywords;
+    return (index?.assets ?? [])
+        .map((asset) => ({ asset, score: wanted.filter((word) => asset.tags.includes(word) || asset.name.includes(word)).length }))
+        .filter(({ score }) => score > 0)
+        .sort((a, b) => b.score - a.score)
+        .map(({ asset }) => asset);
+}
+
+// --- source 2 : Poly Pizza ---
+export async function searchPolyPizza(keyword, { limit = 10, fetchImpl = fetch } = {}) {
+    const source = SOURCES.sources.find((item) => item.id === 'polypizza');
+    const key = env(source.api.secret);
+    if (!key) return { skipped: `secret ${source.api.secret} absent`, results: [] };
+    const url = `${source.api.base}${source.api.search.replace('{keyword}', encodeURIComponent(keyword)).replace('{limit}', String(limit)).replace('{page}', '0')}`;
+    const response = await fetchImpl(url, { headers: { [source.api.auth_header]: key } });
+    if (!response.ok) throw new Error(`Poly Pizza HTTP ${response.status}`);
+    const data = await response.json();
+    return { results: (data.results ?? []).map((model) => ({ id: `polypizza:${model.id}`, name: model.title, download: model.download, triangles: model.triCount, license: model.license, attribution: model.attribution ?? `${model.creator?.name ?? ''} via poly.pizza`, thumbnail: model.thumbnail })) };
+}
+
+export function licenseAllowed(license) {
+    const normalized = String(license ?? '').toUpperCase().replace(/\s/g, '-');
+    if (/-NC|-ND|SA\b.*NC/.test(normalized)) return false;
+    return SOURCES.style.license_allow.some((tag) => normalized.includes(tag));
+}
+
+export function pickCandidate(candidates, { maxTriangles }) {
+    return candidates.filter((item) => licenseAllowed(item.license) && (!item.triangles || item.triangles <= maxTriangles)).sort((a, b) => (a.triangles ?? 0) - (b.triangles ?? 0))[0] ?? null;
+}
+
+// Cascade complete : index local → Poly Pizza. Renvoie { candidate, buffer, stats, scale } ou null.
+export async function findAsset(query, { maxTriangles = 2000, fetchImpl = fetch } = {}) {
+    const indexFile = join(env('GF_ASSET_LIBRARY') ?? '', 'index.json');
+    const index = env('GF_ASSET_LIBRARY') && existsSync(indexFile) ? JSON.parse(readFileSync(indexFile, 'utf8')) : null;
+    const attempts = [];
+    const local = searchLocalIndex(query, index);
+    for (const asset of local.slice(0, 5)) {
+        const buffer = readFileSync(join(env('GF_ASSET_LIBRARY'), asset.file));
+        const stats = glbStats(buffer);
+        attempts.push({ source: asset.id, triangles: stats.triangles });
+        if (stats.triangles <= maxTriangles) return { candidate: { ...asset, license: asset.license ?? 'CC0' }, buffer, stats, scale: query.size ? fitScale(stats.size, query.size) : 1, attempts };
+    }
+    for (const keyword of query.keywords.slice(0, 3)) {
+        const { results, skipped } = await searchPolyPizza(keyword, { fetchImpl });
+        if (skipped) {
+            attempts.push({ source: 'polypizza', skipped });
+            break;
+        }
+        const candidate = pickCandidate(results, { maxTriangles });
+        attempts.push({ source: 'polypizza', keyword, results: results.length, chosen: candidate?.id ?? null });
+        if (!candidate) continue;
+        const response = await fetchImpl(candidate.download);
+        if (!response.ok) continue;
+        const buffer = Buffer.from(await response.arrayBuffer());
+        const stats = glbStats(buffer);
+        return { candidate, buffer, stats, scale: query.size ? fitScale(stats.size, query.size) : 1, attempts };
+    }
+    return { candidate: null, attempts };
+}

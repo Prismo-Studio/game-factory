@@ -19,6 +19,7 @@ import { run } from './steps/run.mjs';
 import { finalize, readReport } from './steps/finalize.mjs';
 import { bootstrap } from './steps/bootstrap.mjs';
 import { scanRelease } from './steps/scan-release.mjs';
+import { produceAsset } from './steps/assets.mjs';
 import { syncLabels } from './labels.mjs';
 
 function parseArgs(argv) {
@@ -107,10 +108,15 @@ writeFileSync(join(workDir, 'state.json'), JSON.stringify({ pipeline: pipeline.n
 let prepared = null;
 let stats = null;
 try {
-    if (pipeline.runner === 'claude-code') prepared = await prepare({ gh, ticket, pipeline, targetDir });
-    const result = await run({ gh, pipeline, ticket, prepared, targetDir, workDir, runner: options.runner ?? 'claude' });
-    if (result.interactive) process.exit(0);
-    stats = result;
+    if (pipeline.runner === 'claude-code' || pipeline.name === 'assets') prepared = await prepare({ gh, ticket, pipeline, targetDir });
+    if (pipeline.name === 'assets') {
+        await produceAsset({ ticket, targetDir, reportFile: join(workDir, 'report.json') });
+        stats = { cost: 0, turns: 0, durationS: 0, model: 'script' };
+    } else {
+        const result = await run({ gh, pipeline, ticket, prepared, targetDir, workDir, runner: options.runner ?? 'claude' });
+        if (result.interactive) process.exit(0);
+        stats = result;
+    }
 } catch (error) {
     warn(`Etape run en erreur : ${error.message}`);
     writeFileSync(join(workDir, 'report.json'), JSON.stringify({ status: 'BLOCKED', kind: 'needs-human', reason: `Erreur d infrastructure : ${error.message.slice(0, 300)}`, actionRequired: 'Consulter les logs du run.' }, null, 2));
