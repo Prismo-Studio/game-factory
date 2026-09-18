@@ -34,3 +34,15 @@ Trois regles pour qu un niveau soit bon sans qu un modele « regarde » l ecran 
 3. **Le visuel se verifie sur capture.** `make capture SCENE=game/gameplay/level.tscn SECONDS=5,15,45` rend des images
    a ces instants (xvfb sur le runner) ; l agent les ouvre avec `Read` et juge lisibilite, contraste, cadrage. QA fait la
    meme chose sur appareil. Le « feel » (timing, rythme) reste humain : il se regle dans `Balance` avec un telephone en main.
+
+
+## Assets : toujours le prefab, jamais une primitive en dur
+
+Chaque objet visible du jeu a un ticket art et un prefab `game/assets/models/<categorie>/<nom>/<nom>.tscn`
+(genere par `make asset-prefab`, present des que le ticket art est passe, placeholder ou vrai modele).
+Le gameplay **instancie ce prefab** (`preload("res://game/assets/models/props/crown_pickup/crown_pickup.tscn")`)
+au lieu de construire un `BoxMesh` ou une `SphereMesh` a la main. Si le prefab n existe pas encore (ticket
+art pas passe), tu le generes toi-meme avec `make asset-prefab NAME=<nom>` apres avoir pose un
+`<nom>.asset.json` placeholder conforme a `charte/05-contrat-asset.md` (`python3 tools/bpy/placeholder.py`),
+et tu le dis dans `notes`. Quand le ticket art livre le vrai modele, il ecrase le glb et l asset.json :
+le gameplay n a rien a changer. Collision, pivot et bounds viennent de l asset.json, pas du code.
