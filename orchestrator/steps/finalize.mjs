@@ -1,4 +1,5 @@
 import { existsSync, readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { env, inActions, isDryRun, sanitizeSecrets, warn } from '../lib/env.mjs';
 import { FACTORY_EMAIL, forcePushArgs, git, isAllowedBranch } from '../lib/git.mjs';
 import { buildTrace, truncate } from '../lib/traces.mjs';
@@ -184,9 +185,22 @@ async function finalizeReview({ gh, pipeline, ticket, prepared, report, stats, t
         }
     }
 
-    // 3. Autofix : modifications laissees dans le clone → amend + force-with-lease.
+    // 3. Rebase en cours (conflits avec la base laisses a l agent) : ses resolutions terminent le rebase.
+    const rebasing = existsSync(join(targetDir, '.git', 'rebase-merge')) || existsSync(join(targetDir, '.git', 'rebase-apply'));
+    if (rebasing) {
+        const unresolved = (prepared.conflicts ?? []).filter((file) => existsSync(join(targetDir, file)) && /^(<{7}|={7}|>{7})/m.test(readFileSync(join(targetDir, file), 'utf8')));
+        if (unresolved.length) {
+            git(['rebase', '--abort'], targetDir);
+            return blocked({ gh, pipeline, ticket, report: { kind: 'needs-human', reason: `Conflits avec ${prepared.base} non resolus : ${unresolved.join(', ')}`, actionRequired: `Rebaser la branche sur ${prepared.base} a la main.` }, stats, targetDir });
+        }
+        git(['add', '-A'], targetDir);
+        git(['-c', 'core.editor=true', 'rebase', '--continue'], targetDir);
+    }
+
+    // 4. Autofix : modifications laissees dans le clone → amend ; puis push si HEAD a change (autofix ou rebase).
     const dirty = git(['status', '--porcelain'], targetDir);
     let newSha = null;
+    const changedFiles = () => git(['diff', '--name-only', `origin/${prepared.base}...HEAD`], targetDir).split('\n').filter(Boolean);
     if (dirty) {
         const files = git(['status', '--porcelain'], targetDir).split('\n').map((line) => line.slice(3)).filter(Boolean);
         const violations = diffViolations(files, { diffText: git(['diff'], targetDir) });
@@ -198,13 +212,21 @@ async function finalizeReview({ gh, pipeline, ticket, prepared, report, stats, t
         const previousBody = git(['log', '-1', '--pretty=%B'], targetDir);
         git(['add', '-A'], targetDir);
         git(['commit', '--amend', '-m', report.commitBody ? `${previousBody.trim()}\n\n${report.commitBody.trim()}` : previousBody], targetDir);
+    }
+    const headNow = git(['rev-parse', 'HEAD'], targetDir);
+    if (headNow !== reviewedSha) {
+        const violations = diffViolations(changedFiles(), { diffText: git(['diff', `origin/${prepared.base}...HEAD`], targetDir) });
+        if (violations.length) {
+            return blocked({ gh, pipeline, ticket, report: { kind: 'needs-human', reason: `Diff refuse apres rebase/autofix : ${violations.join(' ; ')}`, actionRequired: 'Corriger a la main.' }, stats, targetDir });
+        }
         try {
             git(forcePushArgs(gh.cloneUrl(ticket.repo), prepared.branch, reviewedSha), targetDir);
         } catch (error) {
             return blocked({ gh, pipeline, ticket, report: { kind: 'needs-human', reason: `Push refuse : ${sanitizeSecrets(error.message).slice(-300)}`, actionRequired: 'La branche a bouge pendant la reprise : verifier a la main.' }, stats, targetDir });
         }
-        newSha = git(['rev-parse', 'HEAD'], targetDir);
-        await gh.comment(ticket.repo, ticket.number, `${buildTrace('autofix', { from: reviewedSha.slice(0, 7), to: newSha.slice(0, 7) })}\nAutofix · ${files.length} fichier(s) corrige(s) apres la passe ${ticket.attempt}.`);
+        newSha = headNow;
+        const what = [rebasing || (prepared.conflicts ?? []).length ? `rebase sur ${prepared.base}` : null, dirty ? 'autofix' : null].filter(Boolean).join(' + ') || `rebase sur ${prepared.base}`;
+        await gh.comment(ticket.repo, ticket.number, `${buildTrace('autofix', { from: reviewedSha.slice(0, 7), to: newSha.slice(0, 7) })}\n${what} · ${changedFiles().length} fichier(s) dans la PR apres la passe ${ticket.attempt}.`);
     }
 
     const headline = `review · passe ${ticket.attempt} · ${verdictOk ? 'verdict OK, au tour de l humain' : newSha ? 'corrections poussees, nouvelle passe a venir' : 'remarques sans correction possible'}`;

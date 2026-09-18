@@ -75,6 +75,7 @@ export function assemblePrompt({ pipeline, ticket, prepared, attachments, review
         `- Tentative : ${ticket.attempt}`,
         prepared?.branch ? `- Branche deja creee et checkoutee : ${prepared.branch} (base ${prepared.base})` : '',
         prepared?.pull ? `- PR : #${prepared.pull.number}, HEAD ${prepared.pull.head.slice(0, 7)}` : '',
+        prepared?.conflicts?.length ? `- CONFLITS avec ${prepared.base} (rebase en cours, marqueurs <<<<<<< dans les fichiers) : ${prepared.conflicts.join(', ')} — a resoudre en premier, voir « Conflits »` : '',
         '',
         '### Corps du ticket',
         '',

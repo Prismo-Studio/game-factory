@@ -22,9 +22,12 @@ export async function prepare({ gh, ticket, pipeline, targetDir }) {
     git(['config', 'user.name', FACTORY_NAME], targetDir);
     git(['config', 'user.email', FACTORY_EMAIL], targetDir);
 
+    let conflicts = [];
     if (pull) {
-        // Review + autofix : on travaille sur la branche de la PR, main est recupere pour le diff.
+        // Review + autofix : on travaille sur la branche de la PR, la base est recuperee pour le diff.
         git(['fetch', '--depth', '50', gh.cloneUrl(ticket.repo), `refs/heads/${base}:refs/remotes/origin/${base}`], targetDir);
+        conflicts = rebaseOnBase(targetDir, base);
+        if (conflicts.length) console.log(`Conflits avec ${base} laisses a l agent : ${conflicts.join(', ')}`);
     } else if (branch) {
         if (!isAllowedBranch(branch)) throw new Error(`Nom de branche refuse : ${branch}`);
         git(['checkout', '-b', branch], targetDir);
@@ -32,7 +35,36 @@ export async function prepare({ gh, ticket, pipeline, targetDir }) {
 
     const head = git(['rev-parse', 'HEAD'], targetDir);
     console.log(`HEAD ${head.slice(0, 7)} sur ${branch ?? base}`);
-    const prepared = { branch, base, head, pull: pull ? { number: pull.number, head: pull.head.sha, base: pull.base.ref } : null };
+    const prepared = { branch, base, head, conflicts, pull: pull ? { number: pull.number, head: pull.head.sha, base: pull.base.ref } : null };
     writeFileSync(join(targetDir, '..', 'prepare.json'), JSON.stringify(prepared, null, 2));
     return prepared;
+}
+
+// Fichiers generes : en cas de conflit on prend la version de la base sans discuter.
+const GENERATED = /\.(translation|import|uid)$/;
+
+// Rebase la branche de la PR sur la base. Sans conflit : HEAD avance, finalize poussera.
+// Avec conflits : les generes sont resolus ici, les autres restent avec leurs marqueurs pour l agent,
+// et le rebase reste en cours (finalize fera add + rebase --continue).
+export function rebaseOnBase(targetDir, base) {
+    try {
+        git(['rebase', `origin/${base}`], targetDir);
+        return [];
+    } catch {
+        const conflicted = () => git(['diff', '--name-only', '--diff-filter=U'], targetDir).split('\n').filter(Boolean);
+        for (const file of conflicted().filter((file) => GENERATED.test(file))) {
+            try {
+                git(['checkout', '--ours', '--', file], targetDir); // ours = la base pendant un rebase
+                git(['add', '--', file], targetDir);
+            } catch {
+                git(['rm', '-q', '--', file], targetDir); // supprime dans la base
+            }
+        }
+        const remaining = conflicted();
+        if (!remaining.length) {
+            git(['-c', 'core.editor=true', 'rebase', '--continue'], targetDir);
+            return [];
+        }
+        return remaining;
+    }
 }
