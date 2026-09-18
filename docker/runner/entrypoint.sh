@@ -20,7 +20,7 @@ fi
 
 : "${GF_RUNNER_TOKEN:?GF_RUNNER_TOKEN requis (Settings > Actions > Runners > New self-hosted runner, ou un PAT admin:org pour generer un token de registration)}"
 GF_RUNNER_URL="${GF_RUNNER_URL:-https://github.com/Prismo-Studio}"
-GF_RUNNER_NAME="${GF_RUNNER_NAME:-gf-$(hostname)}"
+GF_RUNNER_NAME="${GF_RUNNER_NAME:-gf-local}"   # nom stable : --replace reprend l identite a chaque redemarrage, pas de runner fantome
 GF_RUNNER_LABELS="${GF_RUNNER_LABELS:-gf}"
 
 cd /home/runner/actions-runner
@@ -37,7 +37,7 @@ fi
 
 cleanup() {
     echo "Desenregistrement de ${GF_RUNNER_NAME}…"
-    ./config.sh remove --unattended --token "${REG_TOKEN}" || true
+    ./config.sh remove --token "${REG_TOKEN}" || true
 }
 trap cleanup EXIT INT TERM
 

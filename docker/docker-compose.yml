@@ -11,6 +11,7 @@ services:
         environment:
             GF_RUNNER_URL: ${GF_RUNNER_URL:-https://github.com/Prismo-Studio}
             GF_RUNNER_LABELS: gf
+            GF_RUNNER_NAME: ${GF_RUNNER_NAME:-gf-local}
             GF_OLLAMA_URL: http://ollama:11434
         # adb vers Waydroid (sur l hote, port 5555) ou un telephone en TCP : renseigner GF_ADB_HOST dans .env.
         extra_hosts:
