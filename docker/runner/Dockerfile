@@ -17,7 +17,7 @@ ENV DEBIAN_FRONTEND=noninteractive \
     PATH=/opt/android-sdk/cmdline-tools/latest/bin:/opt/android-sdk/platform-tools:/opt/godot:$PATH
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-        ca-certificates curl git jq unzip zip python3 python3-pip make gosu \
+        ca-certificates curl git jq unzip zip python3 python3-pip make \
         openjdk-17-jdk-headless libfontconfig1 libgl1 libxcursor1 libxinerama1 libxrandr2 libxi6 \
         libasound2t64 libpulse0 xvfb \
     && curl -fsSL "https://deb.nodesource.com/setup_${NODE_MAJOR}.x" | bash - \
@@ -57,6 +57,9 @@ RUN set -eux; useradd --create-home --shell /bin/bash runner; mkdir -p /home/run
     tar xzf runner.tar.gz && rm runner.tar.gz; \
     ./bin/installdependencies.sh; \
     cp -r /root/.local /home/runner/.local; chown -R runner:runner /home/runner
+
+# Petits outils en fin d image : les grosses couches (Godot, SDK Android, runner) restent en cache.
+RUN apt-get update && apt-get install -y --no-install-recommends gosu && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 COPY --chmod=0755 entrypoint.sh /usr/local/bin/entrypoint.sh
 # Demarre root pour reprendre les droits sur les volumes, puis bascule sur `runner` (gosu) : voir entrypoint.sh.
