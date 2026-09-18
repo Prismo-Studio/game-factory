@@ -3,7 +3,7 @@ services:
         build:
             context: ./runner
             args:
-                GODOT_VERSION: ${GODOT_VERSION:-4.5}
+                GODOT_VERSION: ${GODOT_VERSION:-4.7.2}
         image: game-factory-runner:latest
         restart: always
         init: true

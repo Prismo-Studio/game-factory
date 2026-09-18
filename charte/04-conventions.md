@@ -23,7 +23,7 @@ de pipeline, charte : **français**. Les clés i18n sont en anglais, les textes 
 
 ## Godot
 
-- Godot 4.x, dernière stable pinnée dans `game-template/.godot-version` ; tout le monde (VM, template,
+- Godot 4.x (4.7.2 aujourd hui), dernière stable pinnée dans `game-template/.godot-version` ; tout le monde (VM, template,
   Dockerfile) lit ce fichier. GDScript uniquement, typé statiquement (`var x: int`, `-> void`),
   `@warning_ignore` interdit.
 - Scènes en `.tscn` texte, ressources en `.tres` texte. Rien de binaire sauf les assets.

@@ -2,7 +2,7 @@
 # templates + SDK Android en ligne de commande + adb. Aucun secret dans l image.
 FROM ubuntu:24.04
 
-ARG GODOT_VERSION=4.5
+ARG GODOT_VERSION=4.7.2
 ARG RUNNER_VERSION=""
 ARG NODE_MAJOR=22
 ARG ANDROID_CMDLINE_TOOLS=11076708
