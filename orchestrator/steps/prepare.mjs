@@ -9,7 +9,10 @@ export async function prepare({ gh, ticket, pipeline, targetDir }) {
     rmSync(targetDir, { recursive: true, force: true });
     mkdirSync(targetDir, { recursive: true });
 
-    const pull = ticket.pullRequest ? await gh.getPull(ticket.repo, ticket.pullRequest) : null;
+    // Une PR fermee sans merge (placeholder retire, reset) ne compte plus : on repart de la base.
+    const knownPull = ticket.pullRequest ? await gh.getPull(ticket.repo, ticket.pullRequest) : null;
+    const pull = knownPull && knownPull.state === 'open' ? knownPull : null;
+    if (knownPull && !pull) console.log(`PR #${knownPull.number} fermee : on repart de ${BASE_BRANCH}.`);
     const branch = pull ? pull.head.ref : ticket.branch;
     const base = pull ? pull.base.ref : BASE_BRANCH;
 
