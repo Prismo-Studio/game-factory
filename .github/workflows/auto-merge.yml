@@ -1,0 +1,21 @@
+# Merge cote factory, avec GF_GITHUB_TOKEN : les merges declenchent ensuite build et on-pr-merged
+# dans le repo du jeu (un merge par GITHUB_TOKEN ne declenche rien, limitation GitHub).
+name: auto-merge
+
+on:
+  schedule:
+    - cron: '*/5 * * * *'
+  workflow_dispatch:
+
+jobs:
+  merge:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - env:
+          GF_GITHUB_TOKEN: ${{ secrets.GF_GITHUB_TOKEN }}
+          GF_ORG: ${{ github.repository_owner }}
+        run: node orchestrator/auto-merge.mjs
