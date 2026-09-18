@@ -46,6 +46,14 @@ Waydroid tourne sur l hote (pas dans le conteneur), `adb tcpip 5555`, et le runn
 Pas encore : la pipeline Assets ne produit que des placeholders (voir `pipelines/assets/PROMPT.md`).
 Quand la chaine d assets sera tranchee, `docker/blender/Dockerfile` s ajoutera ici.
 
+## Deux runners en parallele (32 Go de RAM ou plus)
+
+`docker-compose.yml` declare `runner` et `runner-2` : deux runners GitHub (`gf-local`, `gf-local-2`), identite et
+`_work` separes, login Claude et caches partages. `docker compose up -d` les demarre tous les deux. Le second
+s enregistre au premier demarrage : il lui faut un `GF_RUNNER_TOKEN` valide dans `.env` (token de registration
+frais, ou un PAT avec « Self-hosted runners : Read and write » qui ne perime pas). Ensuite l identite est dans
+le volume `runner-config-2`, plus besoin de token. Pour rester a un seul runner : `docker compose up -d runner ollama`.
+
 ## Autonomie avec un abonnement Claude (phase 1 bis)
 
 Sans cle API, le runner peut utiliser un abonnement Pro/Max connecte dans le conteneur (identifiants

@@ -1,5 +1,5 @@
 services:
-    runner:
+    runner: &runner
         build:
             context: ./runner
             args:
@@ -8,7 +8,7 @@ services:
         restart: always
         init: true
         env_file: .env
-        environment:
+        environment: &runner_env
             GF_RUNNER_URL: ${GF_RUNNER_URL:-https://github.com/Prismo-Studio}
             GF_RUNNER_LABELS: gf
             GF_RUNNER_NAME: ${GF_RUNNER_NAME:-gf-local}
@@ -22,7 +22,7 @@ services:
             - claude-config:/home/runner/.claude
             - godot-cache:/home/runner/.local/share/godot
             - gradle-cache:/home/runner/.gradle
-        mem_limit: 8g
+        mem_limit: 6g
         cpus: 4
         security_opt:
             - no-new-privileges:true
@@ -32,6 +32,20 @@ services:
             options:
                 max-size: 50m
                 max-file: "3"
+
+    # Deuxieme runner (32 Go de RAM ou plus) : dev + ci, ou dev + review, en parallele.
+    # Identite et _work separes ; login Claude, cache Godot et Gradle partages.
+    runner-2:
+        <<: *runner
+        environment:
+            <<: *runner_env
+            GF_RUNNER_NAME: ${GF_RUNNER_NAME:-gf-local}-2
+        volumes:
+            - runner-work-2:/home/runner/actions-runner/_work
+            - runner-config-2:/home/runner/runner-config
+            - claude-config:/home/runner/.claude
+            - godot-cache:/home/runner/.local/share/godot
+            - gradle-cache:/home/runner/.gradle
 
     ollama:
         image: ollama/ollama:latest
@@ -44,6 +58,8 @@ services:
 volumes:
     runner-work:
     runner-config:
+    runner-work-2:
+    runner-config-2:
     claude-config:
     godot-cache:
     gradle-cache:

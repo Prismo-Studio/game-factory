@@ -36,9 +36,7 @@ jobs:
   run:
     runs-on: [self-hosted, gf]
     timeout-minutes: 90
-    concurrency:
-      group: gf-${{ inputs.pipeline }}
-      cancel-in-progress: false
+    # Pas de groupe de concurrence : deux runs de la meme pipeline se partagent les tickets via le protocole de claim.
     steps:
       - uses: actions/checkout@v4
 
