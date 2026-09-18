@@ -19,6 +19,7 @@ services:
         volumes:
             - runner-work:/home/runner/actions-runner/_work
             - runner-config:/home/runner/runner-config
+            - claude-config:/home/runner/.claude
             - godot-cache:/home/runner/.local/share/godot
             - gradle-cache:/home/runner/.gradle
         mem_limit: 8g
@@ -43,6 +44,7 @@ services:
 volumes:
     runner-work:
     runner-config:
+    claude-config:
     godot-cache:
     gradle-cache:
     ollama:

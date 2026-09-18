@@ -14,8 +14,8 @@ if [[ "$(id -u)" == "0" ]]; then
         target="/home/runner/.local/share/godot/export_templates/$(basename "$templates")"
         [[ -f "$target/android_debug.apk" ]] || { rm -rf "$target"; cp -r "$templates" "$target"; echo "Templates d export installes : $(basename "$templates")"; }
     done
-    mkdir -p /home/runner/runner-config
-    chown -R runner:runner /home/runner/actions-runner/_work /home/runner/.local /home/runner/.gradle /home/runner/runner-config
+    mkdir -p /home/runner/runner-config /home/runner/.claude
+    chown -R runner:runner /home/runner/actions-runner/_work /home/runner/.local /home/runner/.gradle /home/runner/runner-config /home/runner/.claude
     exec gosu runner "$0" "$@"
 fi
 

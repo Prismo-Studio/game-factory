@@ -45,3 +45,19 @@ Waydroid tourne sur l hote (pas dans le conteneur), `adb tcpip 5555`, et le runn
 
 Pas encore : la pipeline Assets ne produit que des placeholders (voir `pipelines/assets/PROMPT.md`).
 Quand la chaine d assets sera tranchee, `docker/blender/Dockerfile` s ajoutera ici.
+
+## Autonomie avec un abonnement Claude (phase 1 bis)
+
+Sans cle API, le runner peut utiliser un abonnement Pro/Max connecte dans le conteneur (identifiants
+dans le volume `claude-config`, donc conserves entre rebuilds) :
+
+```bash
+docker compose exec runner claude login     # affiche une URL : l ouvrir, se connecter, coller le code
+docker compose exec runner claude -p "reponds OK" --output-format text   # doit repondre
+docker compose exec ollama ollama pull qwen2.5:7b   # modele local pour Triage (14b si 20 Go de RAM)
+```
+
+Puis sur `game-factory` (Settings > Secrets and variables > Actions > Variables) : `GF_OLLAMA_MODEL=qwen2.5:7b`
+si tu as pris le 7b. Les crons `dev`, `review`, `triage` se mettent a travailler seuls. Ca consomme le
+quota du plan (partage avec ton usage interactif) ; a quota atteint, la pipeline sort en BLOCKED proprement.
+Pour du non-stop partage, passer a la cle API (charte 06).

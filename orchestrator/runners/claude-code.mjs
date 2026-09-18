@@ -85,11 +85,16 @@ export async function runClaudeCode({ prompt, cwd, reportFile, logDir, profile =
     );
     writeFileSync(join(logDir, 'prompt.md'), prompt, 'utf8');
 
+    // Phase 1 bis : un abonnement Claude connecte sur la machine du runner (`claude login`, identifiants dans
+    // ~/.claude) remplace la cle API. Phase 2 : ANTHROPIC_API_KEY (workspace dedie, plafond mensuel).
     const apiKey = env('ANTHROPIC_API_KEY')?.trim();
-    if (!apiKey) {
-        writeFileSync(reportFile, JSON.stringify({ status: 'BLOCKED', kind: 'blocked', reason: 'ANTHROPIC_API_KEY absente : l agent ne peut pas demarrer.', actionRequired: 'Renseigner le secret ANTHROPIC_API_KEY.' }, null, 2));
+    const home = env('HOME') ?? '';
+    const subscription = !apiKey && ['.credentials.json', '.claude.json'].some((file) => existsSync(join(home, '.claude', file)) || existsSync(join(home, file)));
+    if (!apiKey && !subscription) {
+        writeFileSync(reportFile, JSON.stringify({ status: 'BLOCKED', kind: 'blocked', reason: 'Ni ANTHROPIC_API_KEY ni abonnement Claude connecte sur le runner : l agent ne peut pas demarrer.', actionRequired: 'Poser le secret ANTHROPIC_API_KEY, ou faire `claude login` dans le conteneur du runner.' }, null, 2));
         return { cost: 0, turns: 0, durationS: 0 };
     }
+    if (subscription) console.log('Auth : abonnement Claude du runner (pas de cle API).');
 
     try {
         console.log(`Claude Code CLI : ${execFileSync('claude', ['--version'], { encoding: 'utf8' }).trim()}`);
@@ -112,7 +117,7 @@ export async function runClaudeCode({ prompt, cwd, reportFile, logDir, profile =
     const rawLog = createWriteStream(join(logDir, 'agent.jsonl'), { flags: 'a' });
     const child = spawn('claude', args, {
         cwd,
-        env: { ...process.env, ANTHROPIC_API_KEY: apiKey, CI: 'true', GF_PROFILE: profile, GF_REPORT_FILE: reportFile },
+        env: { ...process.env, ...(apiKey ? { ANTHROPIC_API_KEY: apiKey } : {}), CI: 'true', GF_PROFILE: profile, GF_REPORT_FILE: reportFile },
         stdio: ['pipe', 'pipe', 'pipe'],
     });
 
