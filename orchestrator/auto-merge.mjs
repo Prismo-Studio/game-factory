@@ -10,19 +10,18 @@ import { GAME_TOPIC } from './pipelines.mjs';
 
 const org = env('GF_ORG') ?? 'Prismo-Studio';
 const gh = new GitHub();
-const REQUIRED = ['check', 'gate'];
+const REQUIRED = ['ci', 'merge-gate']; // noms de workflows (l API check-runs exige une GitHub App, pas un PAT)
 
 export async function mergeable(repo, pr) {
     const labels = pr.labels.map((label) => label.name);
     if (pr.draft || !labels.includes('auto-merge')) return 'pas de label auto-merge';
     const isPromotion = pr.base.ref === 'main' && pr.head.ref === 'develop';
     if (pr.base.ref === 'main' && !isPromotion && !/^hotfix\//.test(pr.head.ref)) return 'main seulement par promotion';
-    const checks = await gh.request('GET', `/repos/${repo}/commits/${pr.head.sha}/check-runs?per_page=100`);
-    const byName = Object.fromEntries((checks.check_runs ?? []).map((run) => [run.name, run]));
+    const runs = await gh.request('GET', `/repos/${repo}/actions/runs?head_sha=${pr.head.sha}&per_page=50`);
     for (const name of REQUIRED) {
-        const run = byName[name];
-        if (!run) return `check ${name} absent`;
-        if (run.status !== 'completed' || run.conclusion !== 'success') return `check ${name} : ${run.status}/${run.conclusion ?? '?'}`;
+        const run = (runs.workflow_runs ?? []).filter((item) => item.name === name).sort((a, b) => b.run_number - a.run_number)[0];
+        if (!run) return `workflow ${name} pas encore lance sur ${pr.head.sha.slice(0, 7)}`;
+        if (run.status !== 'completed' || run.conclusion !== 'success') return `workflow ${name} : ${run.status}/${run.conclusion ?? '?'}`;
     }
     const reviews = await gh.listReviews(repo, pr.number);
     const latest = {};
