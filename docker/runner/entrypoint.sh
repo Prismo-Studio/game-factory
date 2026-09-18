@@ -7,7 +7,13 @@ set -euo pipefail
 # Les volumes Docker (_work, caches Godot/Gradle) sont crees par root : on les rend a `runner`
 # puis on se re-execute sous cet utilisateur. Le runner lui-meme ne tourne jamais en root.
 if [[ "$(id -u)" == "0" ]]; then
-    mkdir -p /home/runner/actions-runner/_work /home/runner/.local/share/godot /home/runner/.gradle
+    mkdir -p /home/runner/actions-runner/_work /home/runner/.local/share/godot/export_templates /home/runner/.gradle
+    # Le volume godot-cache masque les templates d export de l image : on y copie ceux de la version courante.
+    for templates in /root/.local/share/godot/export_templates/*; do
+        [[ -d "$templates" ]] || continue
+        target="/home/runner/.local/share/godot/export_templates/$(basename "$templates")"
+        [[ -f "$target/android_debug.apk" ]] || { rm -rf "$target"; cp -r "$templates" "$target"; echo "Templates d export installes : $(basename "$templates")"; }
+    done
     chown -R runner:runner /home/runner/actions-runner/_work /home/runner/.local /home/runner/.gradle
     exec gosu runner "$0" "$@"
 fi
