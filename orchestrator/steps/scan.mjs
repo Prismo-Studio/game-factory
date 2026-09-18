@@ -59,7 +59,8 @@ export async function scan({ gh, pipeline, org, repo: forcedRepo, issue: forcedI
     for (const repo of repos) {
         const issues = forcedIssue ? [await gh.getIssue(repo, forcedIssue)] : await gh.listIssues(repo, { labels: pipeline.inputLabels.length === 1 ? pipeline.inputLabels : [] });
         const closed = forcedIssue ? [] : await gh.listIssues(repo, { state: 'closed' });
-        const doneNumbers = new Set(closed.map((item) => item.number));
+        const doneLabelled = forcedIssue ? [] : await gh.listIssues(repo, { labels: ['done'], state: 'open' });
+        const doneNumbers = new Set([...closed, ...doneLabelled].map((item) => item.number));
         for (const issue of issues) {
             const comments = await gh.listComments(repo, issue.number);
             const labels = issue.labels.map((label) => label.name);
