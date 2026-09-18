@@ -1,0 +1,11 @@
+name: GDD
+description: Le game design document d'un jeu (normalement cree par Bootstrap)
+labels: [spec]
+body:
+  - type: textarea
+    id: gdd
+    attributes:
+      label: GDD
+      description: Pitch, boucle, ce que le joueur voit a 0/10/60 s, hook, assets, monetisation, progression, risque.
+    validations:
+      required: true

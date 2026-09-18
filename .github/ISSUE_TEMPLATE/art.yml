@@ -1,0 +1,48 @@
+name: Asset
+description: Un asset a produire selon le contrat (charte 05)
+labels: [triage]
+body:
+  - type: input
+    id: name
+    attributes:
+      label: Nom (snake_case)
+    validations:
+      required: true
+  - type: dropdown
+    id: category
+    attributes:
+      label: Categorie
+      options: [props, characters, vehicles, environment, ui3d]
+    validations:
+      required: true
+  - type: input
+    id: dims
+    attributes:
+      label: Dimensions cibles (m)
+      placeholder: "0.6 x 0.8 x 0.6"
+    validations:
+      required: true
+  - type: dropdown
+    id: pivot
+    attributes:
+      label: Pivot
+      options: [bottom_center, center]
+    validations:
+      required: true
+  - type: textarea
+    id: attach
+    attributes:
+      label: Points d'attache attendus
+      placeholder: "top : (0, 0.8, 0)"
+  - type: input
+    id: palette
+    attributes:
+      label: Slots de palette
+      placeholder: "wood_dark, metal"
+  - type: textarea
+    id: usage
+    attributes:
+      label: Usage en jeu et reference visuelle en mots
+      description: Jamais « comme dans <jeu connu> ».
+    validations:
+      required: true

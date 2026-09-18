@@ -1,0 +1,28 @@
+name: qa
+
+on:
+  schedule:
+    - cron: '15 * * * *'
+  workflow_dispatch:
+    inputs:
+      repo:
+        description: 'Repo du jeu (owner/name)'
+        required: false
+      tag:
+        description: 'Tag de release a tester (build-N), vide = derniere sans trace gf:qa'
+        required: false
+      dry_run:
+        type: boolean
+        default: false
+
+jobs:
+  qa:
+    uses: ./.github/workflows/_pipeline.yml
+    with:
+      pipeline: qa
+      repo: ${{ inputs.repo || '' }}
+      dry_run: ${{ inputs.dry_run || false }}
+      extra: ${{ inputs.tag && format('--tag {0}', inputs.tag) || '' }}
+    secrets:
+      GF_GITHUB_TOKEN: ${{ secrets.GF_GITHUB_TOKEN }}
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}

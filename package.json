@@ -1,0 +1,12 @@
+{
+  "name": "game-factory",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=22" },
+  "scripts": {
+    "test": "node --test orchestrator/",
+    "run": "node orchestrator/run.mjs",
+    "labels": "node orchestrator/run.mjs labels",
+    "dashboard": "node dashboard/aggregate.mjs"
+  }
+}

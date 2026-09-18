@@ -1,79 +1,57 @@
 # game-factory
 
-L'usine qui fabrique les jeux de `prismo-studio`. Lire `CLAUDE.md` puis `charte/` avant tout.
+L'usine qui fabrique les jeux de `Prismo-Studio`. Lire `CLAUDE.md` puis `charte/` avant tout.
 
-## Arborescence cible
+## Arborescence
 
 ```
-game-factory/
-  CLAUDE.md                        charte racine, dix règles, ordre de lecture
-  README.md
-  charte/
-    00-principes.md
-    01-board.md                    labels, machine à états, traces, anti-rejeu
-    02-pipelines.md                anatomie d'un run, runners, format PROMPT.md, rapport JSON
-    03-definition-de-done.md
-    04-conventions.md
-    05-contrat-asset.md
-    06-budgets.md
-    07-garde-fous.md
-  pipelines/
-    concept/PROMPT.md
-    bootstrap/PROMPT.md            (+ bootstrap.mjs : c'est surtout un script)
-    spec/PROMPT.md
-    triage/PROMPT.md  schema.json  (schéma JSON attendu du runner llm)
-    dev/PROMPT.md  context/{gameplay,ui,meta,monetisation}.md
-    review/PROMPT.md               review + autofix, un seul prompt, deux phases
-    build/                         pas de prompt : scripts et workflow
-    qa/PROMPT.md  context/adb.md  maestro/
-    assets/PROMPT.md  context/blender.md
-    post-launch/PROMPT.md          plus tard
-  orchestrator/
-    run.mjs                        point d'entrée : node orchestrator/run.mjs <pipeline> [--repo] [--issue] [--dry-run] [--runner]
-    lib/github.mjs                 REST GitHub : issues, labels, commentaires, PR, reviews, releases, workflow_dispatch
-    lib/traces.mjs                 lecture/écriture des balises <!-- gf:… -->, compteurs, coûts
-    lib/claim.mjs                  revendication, cooldown, verrou
-    lib/git.mjs
-    steps/scan.mjs  prepare.mjs  run.mjs  finalize.mjs
-    runners/claude-code.mjs        ALWAYS_DENIED_TOOLS, settings, hooks, budget, timeout, extraction du rapport
-    runners/llm.mjs                Ollama ou Anthropic, schéma JSON, 1 retry
-    hooks/guard-write.mjs  guard-readonly.mjs  guard-qa.mjs  deny-always.mjs
-    labels.mjs                     sync de .github/labels.yml vers un repo
-    *.test.mjs                     chaque garde-fou et chaque scan a son test, sans réseau
-  .github/
-    labels.yml                     source de vérité des labels
-    ISSUE_TEMPLATE/concept.yml  spec.yml  ticket.yml  art.yml
-    workflows/
-      concept.yml  bootstrap.yml  spec.yml  triage.yml  dev.yml  review.yml  qa.yml  assets.yml
-                                   un workflow par pipeline : cron filet + workflow_dispatch + concurrency
-      sync-labels.yml
-  docker/
-    runner/Dockerfile              runner GitHub self-hosted : Node, Claude Code CLI, Godot headless + export templates, SDK Android CLI, adb
-    blender/Dockerfile             Blender headless + bpy, appelé par Assets
-    docker-compose.yml             runner ×1 (plus tard ×N), ollama, waydroid optionnel
-    .env.example                   GF_RUNNER_TOKEN uniquement
-    README.md                      hôtes sortants autorisés, dimensionnement
-  dashboard/
-    aggregate.mjs                  somme des gf:run par jeu/pipeline/semaine → un HTML statique sur la VM
+CLAUDE.md                        charte racine, dix règles, ordre de lecture
+charte/00…07                     principes, board, pipelines, DoD, conventions, contrat d'asset, budgets, garde-fous
+pipelines/<nom>/PROMPT.md        le prompt système de chaque pipeline (+ context/ par domaine, schema.json pour les runners llm)
+orchestrator/
+  run.mjs                        node orchestrator/run.mjs <pipeline> [--repo o/n] [--issue N] [--dry-run] [--runner claude|interactive]
+  pipelines.mjs                  table des pipelines : runner, profil, labels, budgets (surchargeables par GF_<PIPELINE>_*)
+  lib/                           github (REST), traces (balises gf:*), claim (revendication), git, env
+  steps/                         scan, scan-release, prepare, run, finalize, bootstrap
+  runners/                       claude-code (headless, hooks, budget), llm (Ollama ou Anthropic, schéma JSON)
+  hooks/                         rules, guard-write, guard-readonly, guard-qa, deny-always
+  *.test.mjs                     npm test — sans réseau
+  labels.mjs, sync-all-labels    sync de .github/labels.yml
+.github/
+  labels.yml                     source de vérité des labels
+  ISSUE_TEMPLATE/                concept, spec (GDD), ticket, art
+  workflows/                     _pipeline (réutilisable) + un workflow par pipeline (cron filet + dispatch + chaînage), sync-labels, tests
+docker/                          runner self-hosted (Node, Claude Code, Godot, SDK Android, adb, Maestro) + Ollama
+dashboard/aggregate.mjs          agrège les balises gf:run → dashboard/out/index.html
 ```
 
-## État d'avancement
+## Lancer en local (phase 1)
+
+```
+export GF_GITHUB_TOKEN=…            # fine-grained, org Prismo-Studio
+npm test                            # garde-fous, traces, scan, finalize, llm
+node orchestrator/run.mjs triage --repo Prismo-Studio/<jeu> --dry-run                 # Ollama local, aucune écriture
+node orchestrator/run.mjs dev --repo Prismo-Studio/<jeu> --issue 14 --runner interactive   # assemble le prompt, tu lances Claude Code toi-même
+node orchestrator/run.mjs finalize --work <dossier affiché>                            # puis push, PR, labels
+```
+
+## État
 
 | Étape | État |
 | --- | --- |
-| 1. Charte | écrite (`charte/`), à relire à deux |
-| 2. Structure des deux repos | ce README + `game-template/README.md` |
-| 3. Board, labels, templates d'issues | `labels.yml` fait ; templates d'issues à écrire |
-| 4. `PROMPT.md` de chaque pipeline | à faire, format défini dans `charte/02-pipelines.md` |
-| 5. Premier jeu à la main (Claude Code interactif) | — |
-| 6. Orchestrateur testé en local avec Ollama | — |
-| 7. Build + QA automatiques | — |
-| 8. Assets | — |
-| 9. Déploiement VM + clé API | — |
-| 10. Post-launch | — |
+| 1. Charte | écrite |
+| 2. Repos | créés, structure en place |
+| 3. Board, labels, templates d'issues | faits |
+| 4. PROMPT.md | écrits (concept, spec, triage, dev ×4 contextes, review, qa, assets) ; bootstrap et build sont des scripts |
+| 5. Premier jeu à la main | à faire : un concept → `concept:approved` → bootstrap → `/gf-dev` ticket par ticket |
+| 6. Orchestrateur local avec Ollama | code écrit et testé hors réseau ; à exercer sur un vrai repo |
+| 7. Build + QA | workflow build dans le template ; QA écrite, à exercer avec un appareil |
+| 8. Assets | contrat + placeholders ; chaîne de production à trancher |
+| 9. VM + clé API | Dockerfile et compose écrits ; secrets d'org à poser |
+| 10. Post-launch | plus tard |
 
 ## Répartition
 
-Personne A (usine) : `charte/`, `pipelines/*/PROMPT.md`, `orchestrator/`, `.github/`, `docker/runner`, `dashboard/`.
-Personne B (jeu) : `game-template`, `pipelines/build`, `pipelines/qa`, `pipelines/assets`, `docker/blender`, bibliothèque d'assets, AdMob et IAP dans le template.
+Personne A (usine) : `charte/`, `pipelines/`, `orchestrator/`, `.github/`, `docker/`, `dashboard/`.
+Personne B (jeu) : `game-template` (Godot, export, AdMob/IAP, palette, QA sur appareil), `pipelines/build`, `pipelines/qa`, `pipelines/assets`.
 Point de rencontre : le premier jeu, pipeline par pipeline, à la main, en notant chaque manque dans la charte ou le template.

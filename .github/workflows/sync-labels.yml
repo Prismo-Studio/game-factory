@@ -1,0 +1,21 @@
+name: sync-labels
+
+on:
+  push:
+    branches: [main]
+    paths: ['.github/labels.yml']
+  workflow_dispatch:
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Sync labels everywhere
+        env:
+          GF_GITHUB_TOKEN: ${{ secrets.GF_GITHUB_TOKEN }}
+          GF_ORG: ${{ github.repository_owner }}
+        run: node orchestrator/sync-all-labels.mjs

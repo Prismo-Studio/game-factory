@@ -1,0 +1,36 @@
+name: Ticket
+description: Un travail livrable en une PR, a router par Triage
+labels: [triage]
+body:
+  - type: textarea
+    id: context
+    attributes:
+      label: Contexte
+      description: Pourquoi ce ticket existe, sans renvoyer au GDD.
+    validations:
+      required: true
+  - type: textarea
+    id: todo
+    attributes:
+      label: A faire
+    validations:
+      required: true
+  - type: textarea
+    id: criteria
+    attributes:
+      label: Criteres d'acceptation
+      description: Un par ligne, verifiables par un test ou une capture.
+      value: |
+        - CA1 —
+        - CA2 —
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: Hors perimetre
+  - type: input
+    id: depends
+    attributes:
+      label: Dependances
+      description: "Format : Depends on #12, #13"

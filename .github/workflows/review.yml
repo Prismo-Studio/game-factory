@@ -1,0 +1,29 @@
+name: review
+
+on:
+  schedule:
+    - cron: '*/20 * * * *'   # filet de securite ; la cadence reelle vient du chainage (finalize → workflow_dispatch)
+  workflow_dispatch:
+    inputs:
+      repo:
+        description: 'Repo cible (owner/name), vide = scan de tous les jeux'
+        required: false
+      issue:
+        description: 'Numero d issue force (ignore les filtres)'
+        required: false
+      dry_run:
+        description: 'Ni push, ni PR, ni ecriture GitHub'
+        type: boolean
+        default: false
+
+jobs:
+  review:
+    uses: ./.github/workflows/_pipeline.yml
+    with:
+      pipeline: review
+      repo: ${{ inputs.repo || '' }}
+      issue: ${{ inputs.issue || '' }}
+      dry_run: ${{ inputs.dry_run || false }}
+    secrets:
+      GF_GITHUB_TOKEN: ${{ secrets.GF_GITHUB_TOKEN }}
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}

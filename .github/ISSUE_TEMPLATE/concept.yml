@@ -1,0 +1,51 @@
+name: Concept
+description: Une idee de jeu, a valider par un humain (label concept:approved) pour que Bootstrap cree le repo
+labels: [concept]
+body:
+  - type: textarea
+    id: pitch
+    attributes:
+      label: Pitch
+      description: Ce qu'on fait, pourquoi c'est satisfaisant, ce qui fait revenir. 3 phrases.
+    validations:
+      required: true
+  - type: textarea
+    id: loop
+    attributes:
+      label: Boucle de jeu
+      description: 5 etapes max, de l'entree en partie au game over.
+    validations:
+      required: true
+  - type: textarea
+    id: seconds
+    attributes:
+      label: Ce que le joueur voit
+      value: |
+        - 0 s :
+        - 10 s :
+        - 60 s :
+    validations:
+      required: true
+  - type: textarea
+    id: hook
+    attributes:
+      label: Hook fake ad
+      description: Le moment de 15 s qu'on filme pour la pub.
+    validations:
+      required: true
+  - type: textarea
+    id: assets
+    attributes:
+      label: Assets
+      description: 15 max, chacun avec sa primitive et ses dimensions (ex. barrel_small - cylindre 0.6×0.8 m).
+    validations:
+      required: true
+  - type: textarea
+    id: placements
+    attributes:
+      label: Monetisation
+      description: Placements pub et regles (frequence, premiere partie exemptee).
+  - type: textarea
+    id: risk
+    attributes:
+      label: Risque principal

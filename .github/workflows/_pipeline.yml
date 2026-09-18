@@ -1,0 +1,73 @@
+# Workflow reutilisable : un run d une pipeline = scan → prepare → run → finalize, via orchestrator/run.mjs.
+# Tourne sur le runner self-hosted de la VM (label `gf`). Un scan a vide coute quelques secondes.
+name: _pipeline
+
+on:
+  workflow_call:
+    inputs:
+      pipeline:
+        required: true
+        type: string
+      repo:
+        required: false
+        type: string
+        default: ''
+      issue:
+        required: false
+        type: string
+        default: ''
+      dry_run:
+        required: false
+        type: boolean
+        default: false
+      extra:
+        required: false
+        type: string
+        default: ''
+    secrets:
+      GF_GITHUB_TOKEN:
+        required: true
+      ANTHROPIC_API_KEY:
+        required: false
+
+jobs:
+  run:
+    runs-on: [self-hosted, gf]
+    timeout-minutes: 90
+    concurrency:
+      group: gf-${{ inputs.pipeline }}
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run pipeline
+        env:
+          GF_GITHUB_TOKEN: ${{ secrets.GF_GITHUB_TOKEN }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          GF_ORG: ${{ github.repository_owner }}
+          GF_ENABLED: ${{ vars.GF_ENABLED || 'true' }}
+          GF_CHAIN: ${{ vars.GF_CHAIN || 'true' }}
+          GF_COOLDOWN_MIN: ${{ vars.GF_COOLDOWN_MIN || '0' }}
+          GF_LLM_BACKEND: ${{ vars.GF_LLM_BACKEND || 'ollama' }}
+          GF_OLLAMA_MODEL: ${{ vars.GF_OLLAMA_MODEL || 'qwen2.5:14b' }}
+          GF_MODEL: ${{ vars.GF_MODEL }}
+          GF_DRY_RUN: ${{ inputs.dry_run }}
+          GF_WORK: ${{ runner.temp }}/gf
+        run: >
+          node orchestrator/run.mjs ${{ inputs.pipeline }}
+          ${{ inputs.repo && format('--repo {0}', inputs.repo) || '' }}
+          ${{ inputs.issue && format('--issue {0}', inputs.issue) || '' }}
+          ${{ inputs.extra }}
+
+      - name: Publish logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gf-${{ inputs.pipeline }}-${{ github.run_id }}
+          path: |
+            ${{ runner.temp }}/gf/**/logs/**
+            ${{ runner.temp }}/gf/**/prompt.md
+            ${{ runner.temp }}/gf/**/report.json
+            ${{ runner.temp }}/gf/**/ticket.json
+          if-no-files-found: ignore
+          retention-days: 14

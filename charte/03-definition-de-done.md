@@ -10,10 +10,12 @@
 2. Le diff ne touche que le périmètre du ticket. Ce qui a été repéré à côté va dans `notes`, pas dans le diff.
 3. Les vérifications de `game-template` passent, dans l'ordre, au premier plan :
    ```
-   godot --headless --path . --import                       # le projet s'importe sans erreur
-   godot --headless --path . --check-only -s game/main.gd   # aucun script ne casse au parse
-   godot --headless --path . -s addons/gut/gut_cmdln.gd -gexit   # tests unitaires verts
-   godot --headless --path . --export-debug "Android" build/game.apk   # l'export Android aboutit
+   make import        # le projet s'importe sans erreur
+   make lint          # aucun script ne casse au parse (--check-only)
+   make test          # GUT headless vert
+   make i18n-check    # toutes les clés existent dans strings.csv
+   make asset-check   # contrat d'asset respecté
+   make export        # l'export Android debug aboutit
    ```
    (Les commandes exactes sont dans le `Makefile` du template : `make check`. Si le template change, c'est
    lui qui fait foi.)

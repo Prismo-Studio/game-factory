@@ -1,0 +1,5 @@
+node_modules/
+dashboard/out/
+docker/.env
+*.log
+.DS_Store

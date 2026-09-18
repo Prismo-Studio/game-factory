@@ -1,0 +1,8 @@
+{
+  "type": "object",
+  "required": ["label", "justification"],
+  "properties": {
+    "label": { "type": "string", "enum": ["todo:gameplay", "todo:ui", "todo:meta", "todo:monetisation", "todo:art"] },
+    "justification": { "type": "string", "maxLength": 300 }
+  }
+}
