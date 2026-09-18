@@ -117,7 +117,7 @@ export async function runClaudeCode({ prompt, cwd, reportFile, logDir, profile =
     const rawLog = createWriteStream(join(logDir, 'agent.jsonl'), { flags: 'a' });
     const child = spawn('claude', args, {
         cwd,
-        env: { ...process.env, ...(apiKey ? { ANTHROPIC_API_KEY: apiKey } : {}), CI: 'true', GF_PROFILE: profile, GF_REPORT_FILE: reportFile },
+        env: { ...process.env, ...(apiKey ? { ANTHROPIC_API_KEY: apiKey } : {}), CI: 'true', GF_PROFILE: profile, GF_REPORT_FILE: reportFile, GF_SKIP_EXPORT: '1' },
         stdio: ['pipe', 'pipe', 'pipe'],
     });
 
