@@ -47,6 +47,23 @@ services:
             - godot-cache:/home/runner/.local/share/godot
             - gradle-cache:/home/runner/.gradle
 
+
+    # Battement de coeur : reveille les pipelines toutes les 10 min. Les crons GitHub Actions
+    # sautent des executions sur un depot prive peu actif ; cette boucle tourne sur la machine
+    # qui heberge deja les runners, donc elle est fiable tant que Docker tourne.
+    heartbeat:
+        image: node:22-alpine
+        restart: always
+        env_file: .env
+        environment:
+            GF_ORG: Prismo-Studio
+            GF_HEARTBEAT_EVERY_S: ${GF_HEARTBEAT_EVERY_S:-600}
+        working_dir: /factory
+        volumes:
+            - ../:/factory:ro
+        command: ["node", "orchestrator/heartbeat.mjs"]
+        mem_limit: 256m
+
     ollama:
         image: ollama/ollama:latest
         restart: always

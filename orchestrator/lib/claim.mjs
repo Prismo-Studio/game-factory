@@ -4,7 +4,8 @@ import { LOCK_LABEL, CLAIM_WINDOW_MS } from '../pipelines.mjs';
 // Le label in-progress n est pas atomique : on ecrit une revendication, on relit, la plus
 // ancienne de moins de 15 min gagne (charte 01-board.md). Porte du kit d origine.
 export async function claimIssue(gh, repo, number, { pipeline, runId, lock = true, windowMs = CLAIM_WINDOW_MS }) {
-    if (lock) await gh.addLabels(repo, number, [LOCK_LABEL]);
+    // Le verrou n est pose qu APRES avoir gagne la course : le poser avant laissait un
+    // in-progress orphelin sur le ticket quand ce run perdait et repartait sans rien faire.
     await gh.comment(repo, number, `${buildTrace('claim', { pipeline, run: runId })}\nPrise en charge par ${pipeline} (run ${runId}).`);
     const comments = await gh.listComments(repo, number);
     const winner = claimsIn(comments, pipeline, windowMs)[0];
@@ -16,6 +17,7 @@ export async function claimIssue(gh, repo, number, { pipeline, runId, lock = tru
         console.log(`  #${number} : deja revendique par le run ${winner.attrs.run}.`);
         return false;
     }
+    if (lock) await gh.addLabels(repo, number, [LOCK_LABEL]);
     console.log(`  #${number} : revendication obtenue.`);
     return true;
 }

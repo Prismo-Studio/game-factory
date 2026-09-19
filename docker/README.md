@@ -69,3 +69,17 @@ Puis sur `game-factory` (Settings > Secrets and variables > Actions > Variables)
 si tu as pris le 7b. Les crons `dev`, `review`, `triage` se mettent a travailler seuls. Ca consomme le
 quota du plan (partage avec ton usage interactif) ; a quota atteint, la pipeline sort en BLOCKED proprement.
 Pour du non-stop partage, passer a la cle API (charte 06).
+
+## Battement de coeur (indispensable)
+
+Les crons GitHub Actions ne sont pas fiables sur un depot prive peu actif : le 19/09, aucune pipeline
+`dev` ne s est lancee entre 13h17 et 15h51, et un ticket est reste bloque tout ce temps. Le service
+`heartbeat` du compose reveille les pipelines toutes les 10 minutes depuis la machine qui heberge les
+runners. Il lui faut un PAT dans `.env` :
+
+```
+GF_GITHUB_TOKEN=github_pat_...     # permissions Actions: read and write sur l org
+```
+
+Puis `docker compose up -d heartbeat`. Verifier : `docker compose logs -f heartbeat` affiche une ligne
+`reveil <pipeline>` par pipeline a chaque battement.
