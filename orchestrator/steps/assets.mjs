@@ -63,6 +63,16 @@ export async function produceAsset({ ticket, targetDir, reportFile }) {
     }
 
     git(['add', '-A'], targetDir);
+    // Rien a commiter : le placeholder identique est deja sur develop et aucun modele n a ete trouve.
+    // Ce n est pas une panne, c est un resultat : le ticket attend un humain.
+    if (!git(['status', '--porcelain'], targetDir)) {
+        writeFileSync(reportFile, JSON.stringify({
+            status: 'BLOCKED', kind: 'needs-human', ticket: ticket.number,
+            reason: `Aucun modele CC0 exploitable pour ${query.name} (${found.attempts.map((item) => item.source + (item.skipped ? ' ignore : ' + item.skipped : item.keyword ? ` ${item.keyword}=${item.results}` : '')).join(' ; ')}), et le placeholder deja en place est inchange : rien a livrer.`,
+            actionRequired: 'Affiner les mots-cles Recherche du ticket, relever le budget de la categorie, ou fournir le modele a la main.',
+        }, null, 2));
+        return { found: false };
+    }
     git(['commit', '-q', '-m', `art(#${ticket.number}): ${placeholder ? 'placeholder' : 'library asset'} ${query.name}`, '-m', placeholder ? 'No CC0 match found: placeholder respecting the asset contract.' : `Source ${meta.source}, ${meta.triangles} triangles, scale ${meta.scale}. ${meta.attribution}`, '-m', `Closes #${ticket.number}`], targetDir);
 
     const summary = rejected
