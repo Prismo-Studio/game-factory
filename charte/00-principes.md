@@ -79,5 +79,10 @@ Consequences pratiques :
 - `promote` et `qa` sont dans `GF_HEARTBEAT_PIPELINES` au meme titre que les autres. Les en retirer
   arrete la generation de tickets.
 - L auto-merge reveille `promote` des qu il a merge quelque chose : `develop` vient d avancer.
+- `promote` n envoie a la QA qu un increment termine : tant qu un ticket porte `todo:*`,
+  `review` ou `in-progress`, elle attend. Sans cette condition, la QA testerait un jeu a moitie
+  construit et rapporterait comme defauts tout ce qui est deja dans le backlog — un doublon par
+  ticket. Les tickets `needs-human` ne retiennent pas la promotion : ils peuvent rester ouverts
+  des semaines, et les faire bloquer la boucle reviendrait a l arreter.
 - Un jeu dont le ticket `Factory control` porte `factory:paused` sort du cycle entierement, promotion
   et QA comprises. C est le seul bouton d arret.

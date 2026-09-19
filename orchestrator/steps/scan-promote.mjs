@@ -1,6 +1,17 @@
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { BASE_BRANCH, GAME_TOPIC, PAUSE_LABEL, RELEASE_BRANCH } from '../pipelines.mjs';
+import { BASE_BRANCH, GAME_TOPIC, LOCK_LABEL, PAUSE_LABEL, RELEASE_BRANCH } from '../pipelines.mjs';
+
+// Un ticket encore en file ou en cours signifie que l increment n est pas fini. Promouvoir a ce
+// moment-la envoie a la QA un jeu a moitie construit : elle rapporte alors l absence de tout ce
+// qui est deja dans le backlog, et chaque manque devient un ticket en double. On attend donc que
+// la file soit vide — ce qui est aussi le moment ou l usine n a plus rien a faire et a besoin que
+// la QA lui redonne du travail.
+const BUSY = (label) => label.startsWith('todo:') || label === 'review' || label === LOCK_LABEL;
+
+export function pendingWork(issues) {
+    return issues.filter((issue) => (issue.labels ?? []).some((label) => BUSY(typeof label === 'string' ? label : label.name)));
+}
 
 // Promote : la "file" est la liste des jeux dont `develop` est en avance sur `main`.
 // La release elle-meme est produite par le workflow `build.yml` du depot du jeu, au push sur
@@ -20,6 +31,11 @@ export async function scanPromote({ gh, org, pipeline, repo: forcedRepo, runId, 
         }
         if (!comparison.ahead_by) {
             console.log(`  ${repo} : ${BASE_BRANCH} n a rien de plus que ${RELEASE_BRANCH}`);
+            continue;
+        }
+        const busy = pendingWork(await gh.listIssues(repo, { state: 'open' }));
+        if (busy.length) {
+            console.log(`  ${repo} : ${busy.length} ticket(s) encore en file (${busy.slice(0, 5).map((issue) => `#${issue.number}`).join(', ')}) — increment non termine.`);
             continue;
         }
         const ticket = {
