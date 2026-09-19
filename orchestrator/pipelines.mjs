@@ -112,7 +112,9 @@ export function pipelineConfig(name) {
         name,
         ...base,
         inputLabels: base.inputLabels ?? (base.inputLabel ? [base.inputLabel] : []),
-        model: env(`GF_MODEL_${key}`) ?? env('GF_MODEL') ?? undefined,
+        // GF_MODEL vise les pipelines agent (Claude Code). Une pipeline `llm` tourne sur Ollama :
+        // lui passer « sonnet » la ferait repondre 404 model not found.
+        model: env(`GF_MODEL_${key}`) ?? (base.runner === 'claude-code' ? env('GF_MODEL') : env('GF_OLLAMA_MODEL')) ?? undefined,
         budget: {
             maxCostUsd: override('MAX_COST_USD', base.budget.maxCostUsd),
             timeoutMin: override('TIMEOUT_MIN', base.budget.timeoutMin),
