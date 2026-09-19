@@ -4,7 +4,7 @@ import { env, inActions, isDryRun, sanitizeSecrets, warn } from '../lib/env.mjs'
 import { FACTORY_EMAIL, forcePushArgs, git, isAllowedBranch } from '../lib/git.mjs';
 import { buildTrace, truncate } from '../lib/traces.mjs';
 import { FORBIDDEN_PATHS } from '../hooks/rules.mjs';
-import { LOCK_LABEL } from '../pipelines.mjs';
+import { AUTO_MERGE_LABEL, autoMergeByDefault, LOCK_LABEL } from '../pipelines.mjs';
 
 const SECRET_PATTERNS = [/sk-ant-[A-Za-z0-9_-]{20,}/, /AIza[0-9A-Za-z_-]{30,}/, /ghp_[A-Za-z0-9]{30,}/, /github_pat_[A-Za-z0-9_]{40,}/, /ca-app-pub-(?!3940256099942544)\d{16}~\d{10}/];
 
@@ -147,8 +147,8 @@ async function finalizePullRequest({ gh, pipeline, ticket, prepared, report, sta
     const title = truncate(report.prTitle ?? `#${ticket.number} — ${ticket.title}`, 200);
     const pull = existing ? await gh.request('PATCH', `/repos/${ticket.repo}/pulls/${existing.number}`, { title, body }) : await gh.createPull(ticket.repo, { head: branch, base: prepared.base, title, body });
     console.log(`PR : ${gh.pullUrl(ticket.repo, pull.number)}`);
-    // Un humain a pose auto-merge sur le ticket : la PR merge seule quand ci + merge-gate + review passent.
-    if (ticket.labels.includes('auto-merge')) await gh.addLabels(ticket.repo, pull.number, ['auto-merge']);
+    // La PR merge seule quand ci + merge-gate + review passent : par defaut, ou si le ticket porte le label.
+    if (autoMergeByDefault() || ticket.labels.includes(AUTO_MERGE_LABEL)) await gh.addLabels(ticket.repo, pull.number, [AUTO_MERGE_LABEL]);
 
     const extra = { pr: pull.number, sha: git(['rev-parse', '--short', 'HEAD'], targetDir) };
     await gh.comment(ticket.repo, ticket.number, [ownerComment({ pipeline, ticket, stats, status: 'SUCCESS', headline: `${pipeline.name} · tentative ${ticket.attempt} · PR #${pull.number} ${existing ? 'mise a jour' : 'ouverte'} · ${files.length} fichier(s)`, detail: report.summary, extra }), buildTrace('pr', { number: pull.number })].join('\n'));
@@ -246,7 +246,7 @@ async function finalizeSpec({ gh, pipeline, ticket, report, stats }) {
     for (const child of children) {
         const depends = (child.dependsOn ?? []).map((index) => created[index]?.number).filter(Boolean);
         const body = [child.body, '', `Parent : #${ticket.number}`, depends.length ? `Depends on ${depends.map((number) => `#${number}`).join(', ')}` : '', buildTrace('child', { parent: ticket.number, domain_hint: child.domainHint ?? '' })].filter((line) => line !== '').join('\n');
-        const issue = await gh.createIssue(ticket.repo, { title: truncate(child.title, 120), body, labels: ['triage'] });
+        const issue = await gh.createIssue(ticket.repo, { title: truncate(child.title, 120), body, labels: ['triage', ...(autoMergeByDefault() ? [AUTO_MERGE_LABEL] : [])] });
         created.push(issue);
         console.log(`  #${issue.number} ${issue.title}`);
     }
@@ -282,7 +282,7 @@ async function finalizeQa({ gh, pipeline, ticket, report, stats }) {
     if (isDryRun()) return console.log(`DRY RUN : ${findings.length} ecart(s), verdict ${report.verdict}`);
     const created = [];
     for (const finding of findings.slice(0, 15)) {
-        const labels = ['triage', 'origin:qa', ...(finding.severity === 'crash' ? ['priority:high'] : [])];
+        const labels = ['triage', 'origin:qa', ...(finding.severity === 'crash' ? ['priority:high'] : []), ...(autoMergeByDefault() ? [AUTO_MERGE_LABEL] : [])];
         const body = [finding.body, '', '## Reproduction', finding.reproduction ?? '', '', `Build : ${ticket.release.tag}`, finding.screenshot ? `Capture : ${finding.screenshot}` : '', buildTrace('qa-finding', { build: ticket.release.tag })].join('\n');
         created.push(await gh.createIssue(ticket.repo, { title: truncate(`[QA] ${finding.title}`, 120), body, labels }));
     }

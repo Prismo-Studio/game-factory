@@ -106,8 +106,10 @@ mergée par un humain, ou par la factory si `auto-merge` est posé dessus. `hotf
 Chaque merge sur `main` produit une Release `build-N` que QA teste ; un merge sur `develop` produit
 seulement un APK en artefact.
 
-**Auto-merge.** Un humain qui veut que la factory aille jusqu'au bout pose `auto-merge` sur le ticket
-(propagé à la PR par `finalize`) ou directement sur la PR. `auto-merge.yml` merge en squash quand :
+**Auto-merge.** Par défaut la factory va jusqu'au bout : `finalize` pose `auto-merge` sur chaque PR
+qu'elle ouvre, et Spec et QA le posent sur les tickets qu'ils créent. Pour reprendre la main sur les
+merges, poser la variable `GF_AUTO_MERGE=false` sur `game-factory` : le label n'est alors ajouté que
+si un humain le pose lui-même sur le ticket ou sur la PR. `auto-merge.yml` merge en squash quand :
 `check` et `gate` sont verts, aucune review humaine « changes requested » n'est en attente, et le ticket
 est `review:handled` ou `approved`. Sans ce label, le merge reste un geste humain.
 

@@ -94,6 +94,9 @@ export const EXCLUDED_LABELS = ['in-progress', 'approved', 'done', 'blocked', 'n
 export const PAUSE_LABEL = 'factory:paused';
 export const RESET_LABEL = 'reset';
 export const PRIORITY_LABEL = 'priority:high';
+export const AUTO_MERGE_LABEL = 'auto-merge';
+// Chaine complete sans geste humain (charte 01). GF_AUTO_MERGE=false rend le merge manuel.
+export const autoMergeByDefault = () => String(env('GF_AUTO_MERGE') ?? 'true').toLowerCase() === 'true';
 export const CLAIM_WINDOW_MS = 15 * 60_000;
 export { GAME_TOPIC };
 
