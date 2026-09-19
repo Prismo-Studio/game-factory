@@ -52,6 +52,24 @@ de pipeline, charte : **français**. Les clés i18n sont en anglais, les textes 
 - Juiciness de base (squash & stretch, particules, screen shake, feedback sonore) vient du template,
   via `Juice.*` ; un jeu l'utilise, il ne le réécrit pas.
 
+## Interface
+
+Un jeu ne livre jamais les `Control` par defaut de Godot. L'interface passe par un `Theme` unique
+(`game/ui/theme/<jeu>.tres`) qui definit au minimum : la police et ses tailles, les trois etats de
+bouton (normal, survol, presse), les panneaux, et les couleurs, toutes tirees de la palette du jeu.
+Aucun `StyleBox` pose a la main dans une scene, aucune couleur en dur dans un `.gd` : si un ecran a
+besoin d'un style, il vient du theme.
+
+Le menu est la premiere image que voit un joueur venu d'une publicite, et il decide s'il reste. Un
+menu acceptable a donc : un fond anime (le dispositif du jeu au ralenti, ou une scene jouee en
+boucle), un titre travaille, des boutons avec etat presse, son et apparition decalee, et une
+transition vers le niveau — pas une substitution seche de scene. Une colonne de boutons gris sur un
+fond uni n'est pas une interface finie, c'est un blocage a remonter.
+
+Le theme est fait main par defaut. Un pack d'interface externe est un repli, decide par un humain
+sur ticket `needs-human:art` apres avoir vu une capture du theme fait main — pas un raccourci qu'une
+pipeline choisit d'elle-meme.
+
 ## Sauvegarde locale
 
 Un fichier `user://save.json`, `{ "schema": 3, "data": {...} }`. `SaveService.migrate(from, to)` applique
