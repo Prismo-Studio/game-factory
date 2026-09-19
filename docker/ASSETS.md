@@ -11,43 +11,43 @@ par jeu, c est la regle.
 Sur la machine qui heberge Docker :
 
 ```
-C:\Users\Asuki\game_factory\assets-library\<source>\<pack>\*.glb
+C:\Users\Asuki\game_factory\assets-library\<pack>\...
 ```
 
 Le dossier est un cran AU-DESSUS des depots (a cote de `game-factory`, `crown-roll`,
 `game-template`) : il ne doit jamais etre versionne, les packs payants n ont rien a faire
 dans un depot GitHub.
 
-Exemple avec KayKit :
+Exemple, tel qu installe :
 
 ```
 assets-library\
-  kaykit\
-    dungeon\        dungeon_wall.glb, dungeon_floor.glb, torch.glb ...
-    adventurers\    knight.glb, rogue.glb ...
-    prototype-bits\ ...
-  kenney\
-    ui-3d\          ...
+  adventurers\          KayKit_Adventurers_2.0_FREE\Characters\gltf\Knight.gltf ...
+  character_animations\ KayKit_Character_Animations_1.1\...
+  dungeon\              KayKit_Dungeon_Pack_1.1_FREE\Assets\gltf\wall.gltf ...
+  prototype_bits\       KayKit_Prototype_Bits_1.1_FREE\Assets\gltf\...
 ```
 
-`<source>` et `<pack>` comptent : l indexeur en tire les tags de recherche, en plus des
-mots du nom de fichier. Donc des noms de dossiers descriptifs et en minuscules, sans
-accent, separes par des tirets.
+L arborescence interne des packs est libre, l indexeur descend recursivement. Ce qui compte,
+c est le nom du dossier de premier niveau : il devient un tag de recherche. Donc minuscules,
+sans accent, descriptif (`dungeon`, pas `KayKit_Dungeon_Pack_1.1_FREE`).
+
+Les tags d un modele sont les mots de son nom de fichier plus ceux de tous les dossiers de
+son chemin, moins une liste de bruit (`assets`, `gltf`, `textures`, `free`, `samples`...).
 
 Un autre chemin est possible via `GF_ASSET_LIBRARY_HOST` dans `docker/.env` (chemin hote,
 absolu ou relatif a `docker/`). Par defaut : `../../assets-library`.
 
 ## Formats
 
-Seuls les `.glb` sont indexes. Les packs livres en `.fbx`, `.obj` ou `.blend` doivent etre
-convertis. KayKit fournit des `.glb` directement, rien a faire. Pour le reste :
+Seuls les `.glb` sont indexes, mais la plupart des packs n en livrent aucun : KayKit fournit
+du `.fbx`, de l `.obj` et du `.gltf` accompagne de `.bin` et de textures separees. La passe
+`assets-convert.mjs` convertit chaque `.gltf` en `.glb` autonome (buffer et textures
+embarques) a cote du fichier source, avant l indexation. C est automatique, tu n as rien a
+faire ; les `.fbx` et `.obj` sont ignores.
 
-```
-docker compose run --rm assets-index   # ignore silencieusement ce qui n est pas .glb
-```
-
-Les textures embarquees dans le `.glb` sont conservees. Un `.glb` qui reference une texture
-externe perdra son materiau : re-exporter en embarquant.
+Un pack qui ne livrerait ni `.glb` ni `.gltf` (que du `.fbx`) ne peut pas etre indexe en
+l etat : il faudrait passer par Blender. Aucun des packs KayKit n est dans ce cas.
 
 ## Indexation
 
@@ -58,9 +58,14 @@ cd C:\Users\Asuki\game_factory\game-factory\docker
 docker compose run --rm assets-index
 ```
 
-Ecrit `assets-library\index.json` : un enregistrement par modele avec ses tags, son nombre
-de triangles et ses dimensions. Les budgets de `tools/asset_check.py` s appliquent ensuite
-normalement : un modele trop lourd est refuse et la cascade passe au candidat suivant.
+Ce service fait les deux passes : conversion `.gltf` -> `.glb`, puis ecriture de
+`assets-library\index.json` (un enregistrement par modele : tags, triangles, dimensions).
+Il est idempotent, un `.glb` deja present n est pas reconverti.
+
+Les budgets de `tools/asset_check.py` s appliquent ensuite. Un modele de bibliotheque a droit
+a `BUDGET_LIBRARY`, plus large que le budget des modeles rapatries par API : les persos
+rigges des packs tournent a 6000-9000 triangles et seraient tous refuses autrement. Un modele
+hors budget n est pas une erreur, la cascade passe simplement au candidat suivant.
 
 ## Verification
 

@@ -81,7 +81,15 @@ services:
         volumes:
             - ../:/factory:ro
             - ${GF_ASSET_LIBRARY_HOST:-../../assets-library}:/assets-library
-        command: ["node", "orchestrator/assets-index.mjs"]
+        # Conversion .gltf -> .glb autonome, puis indexation. @gltf-transform est installe
+        # dans le conteneur jetable : /factory est monte en lecture seule.
+        command:
+            - sh
+            - -c
+            - >
+                npm install -g --silent @gltf-transform/core@4 &&
+                NODE_PATH=$$(npm root -g) node orchestrator/assets-convert.mjs &&
+                node orchestrator/assets-index.mjs
         mem_limit: 1g
 
     ollama:

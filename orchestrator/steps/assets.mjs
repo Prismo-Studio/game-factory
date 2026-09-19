@@ -4,8 +4,10 @@ import { execFileSync, spawnSync } from 'node:child_process';
 import { git } from '../lib/git.mjs';
 import { findAsset, parseArtTicket, SOURCES } from '../lib/assets.mjs';
 
-// Doit rester aligne sur tools/asset_check.py du template, qui refuse l asset au-dela.
+// Doivent rester alignes sur BUDGET et BUDGET_LIBRARY de tools/asset_check.py du template,
+// qui refuse l asset au-dela.
 const BUDGET = { props: 1500, characters: 3000, vehicles: 3000, environment: 3000, ui3d: 500 };
+const BUDGET_LIBRARY = { props: 2500, characters: 10000, vehicles: 6000, environment: 6000, ui3d: 1500 };
 
 // Pipeline Assets, niveau 1 et 2 de la cascade (charte 05) : bibliotheque CC0 → placeholder.
 // Script deterministe : aucun appel modele. Blender (niveau 3) viendra avec le label art:hero.
@@ -19,8 +21,9 @@ export async function produceAsset({ ticket, targetDir, reportFile }) {
     const folder = join(targetDir, 'game', 'assets', 'models', query.category, query.name);
     mkdirSync(folder, { recursive: true });
     const maxTriangles = BUDGET[query.category] ?? SOURCES.style.max_triangles_default;
+    const maxTrianglesLibrary = BUDGET_LIBRARY[query.category] ?? maxTriangles;
 
-    const found = await findAsset(query, { maxTriangles });
+    const found = await findAsset(query, { maxTriangles, maxTrianglesLibrary });
     console.log(`Recherche ${query.name} (${query.keywords.join(', ')}) : ${JSON.stringify(found.attempts)}`);
     let meta;
     let placeholder = false;

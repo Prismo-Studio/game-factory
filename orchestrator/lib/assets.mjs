@@ -87,7 +87,10 @@ export function pickCandidate(candidates, { maxTriangles }) {
 }
 
 // Cascade complete : index local → Poly Pizza. Renvoie { candidate, buffer, stats, scale } ou null.
-export async function findAsset(query, { maxTriangles = 2000, fetchImpl = fetch } = {}) {
+// `maxTrianglesLibrary` : budget separe pour la bibliotheque locale, alignee sur BUDGET_LIBRARY
+// de tools/asset_check.py. Les packs achetes/CC0 visent le PC et depassent le budget mobile sur
+// les personnages rigges ; leur appliquer le budget de l API ferait tout retomber en placeholder.
+export async function findAsset(query, { maxTriangles = 2000, maxTrianglesLibrary = maxTriangles, fetchImpl = fetch } = {}) {
     const indexFile = join(env('GF_ASSET_LIBRARY') ?? '', 'index.json');
     const index = env('GF_ASSET_LIBRARY') && existsSync(indexFile) ? JSON.parse(readFileSync(indexFile, 'utf8')) : null;
     const attempts = [];
@@ -96,7 +99,7 @@ export async function findAsset(query, { maxTriangles = 2000, fetchImpl = fetch 
         const buffer = readFileSync(join(env('GF_ASSET_LIBRARY'), asset.file));
         const stats = glbStats(buffer);
         attempts.push({ source: asset.id, triangles: stats.triangles });
-        if (stats.triangles <= maxTriangles) return { candidate: { ...asset, license: asset.license ?? 'CC0' }, buffer, stats, scale: query.size ? fitScale(stats.size, query.size) : 1, attempts };
+        if (stats.triangles <= maxTrianglesLibrary) return { candidate: { ...asset, license: asset.license ?? 'CC0' }, buffer, stats, scale: query.size ? fitScale(stats.size, query.size) : 1, attempts };
     }
     // L API ne renvoie pas toujours le nombre de triangles : le seul chiffre sur lequel on peut
     // compter est celui du .glb telecharge. On essaie donc plusieurs candidats par mot-cle et on
