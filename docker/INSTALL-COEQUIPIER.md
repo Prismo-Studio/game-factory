@@ -1,7 +1,8 @@
 # Rejoindre l usine — installation sur une deuxieme machine
 
 Objectif : ta machine fait tourner des runners qui prennent les memes tickets que ceux de Mathis, avec
-**ton** abonnement Claude. Vos capacites s additionnent, vos comptes restent separes. GitHub garde
+**ton** abonnement Claude. Le jeu sur lequel vous travaillez est le puzzle de tiges ; son depot sera
+cree par l usine quand le concept sera approuve. Vos capacites s additionnent, vos comptes restent separes. GitHub garde
 l etat (tickets, labels) et distribue le travail ; deux runners ne prennent jamais le meme ticket.
 
 ## 0. Prerequis
@@ -18,10 +19,18 @@ l etat (tickets, labels) et distribue le travail ; deux runners ne prennent jama
 ```bash
 mkdir game_factory && cd game_factory
 git clone https://github.com/Prismo-Studio/game-factory.git
-git clone https://github.com/Prismo-Studio/crown-roll.git      # le jeu en cours, pour y jouer
 ```
 
-`game-factory` contient l usine. `crown-roll` est le jeu : tu l ouvres dans Godot 4.7.2 pour tester.
+C est le seul depot a cloner pour l instant : il contient l usine et le dossier `docker/` ou tout se
+lance. **Le depot du jeu n existe pas encore** — il sera cree automatiquement par la pipeline Bootstrap
+le jour ou le concept sera approuve. Tu le cloneras a ce moment-la pour y jouer :
+
+```bash
+git clone https://github.com/Prismo-Studio/<nom-du-jeu>.git
+```
+
+Pour y jouer il te faudra **Godot 4.7.2** exactement (pas 4.5, pas 4.8) : la CI verifie la version et
+refusera tout ce qui vient d une autre.
 
 ## 2. Obtenir un token de runner
 
