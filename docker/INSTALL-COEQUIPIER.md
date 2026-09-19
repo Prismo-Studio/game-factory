@@ -113,6 +113,35 @@ docker compose logs -f runner
 
 Une ligne `Running job: dev / run` signifie que ta machine travaille sur un ticket.
 
+## Bibliotheque d assets (obligatoire)
+
+Le depot `assets-library` contient les modeles CC0 dans lesquels l usine pioche. Sans lui, tes runs
+d art produiront un rendu different de ceux de l autre machine, sur le meme jeu.
+
+```
+cd C:\Users\<toi>\game_factory
+git clone https://github.com/Prismo-Studio/assets-library.git
+```
+
+Il doit atterrir **a cote** des depots, pas dedans :
+
+```
+game_factory\
+  game-factory\
+  game-template\
+  assets-library\
+```
+
+Rien a configurer ensuite : le compose le monte tout seul sous `/assets-library` dans les runners.
+Verification, depuis `game-factory\docker` :
+
+```
+docker compose run --rm assets-index
+```
+
+Le nombre d assets affiche doit etre identique sur les deux machines. S il differe, `git pull` sur
+`assets-library` avant d aller plus loin.
+
 ## Pieges connus
 
 - **Veille de la machine** : Docker s arrete, les runs en cours echouent. Desactive-la.
@@ -121,9 +150,9 @@ Une ligne `Running job: dev / run` signifie que ta machine travaille sur un tick
   un token neuf et relance `docker compose up -d`.
 - **Login Claude en root** : `claude login` sans `--user runner` ne sert a rien.
 - **Battement de coeur en double** : ne demarre pas le service `heartbeat`.
-- **Pack d assets** : si l usine utilise une bibliotheque locale (`GF_ASSET_LIBRARY`), tu dois avoir les
-  memes fichiers au meme chemin que Mathis, sinon un ticket d art donnera un resultat different selon
-  la machine qui le prend. A synchroniser avant de traiter des tickets `todo:art`.
+- **Bibliotheque d assets absente ou pas a jour** : un ticket `todo:art` traite sans elle repart en
+  recherche generique et ramene un modele d un autre style. Cloner `assets-library` (voir ci-dessous)
+  et faire `git pull` dessus avant chaque session.
 
 ## Ce que tu ne dois pas faire
 
