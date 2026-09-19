@@ -56,7 +56,7 @@ async function unlock(gh, ticket) {
 
 // La pipeline qui vient de produire un label d entree pour une autre la reveille : sans cela on
 // attendrait le cron, qui peut etre retarde de plusieurs heures par GitHub.
-const NEXT_PIPELINE = { dev: 'review', assets: 'review', spec: 'triage', triage: 'dev', bootstrap: 'spec', concept: 'bootstrap' };
+const NEXT_PIPELINE = { dev: 'review', assets: 'review', spec: 'triage', triage: 'dev', bootstrap: 'spec', concept: 'bootstrap', build: 'qa', qa: 'triage' };
 
 async function chain(gh, org, pipeline, { also = [] } = {}) {
     if (isDryRun() || !inActions() || String(env('GF_CHAIN') ?? 'true') !== 'true') return;
@@ -297,6 +297,12 @@ async function finalizeQa({ gh, pipeline, ticket, report, stats }) {
     await gh.updateRelease(ticket.repo, ticket.release.id, { body: `${ticket.release.body ?? ''}\n\n${summary}` });
 }
 
+// --- build : la release est deja publiee par l etape run, il n y a pas de ticket a annoter.
+// Le handler existe pour que le chainage vers la QA parte quand meme.
+async function finalizeBuild({ report }) {
+    console.log(report.summary ?? 'Release publiee.');
+}
+
 export async function finalize(context) {
     const { gh, pipeline, ticket, org } = context;
     const report = context.report ?? readReport(context.reportFile);
@@ -304,7 +310,7 @@ export async function finalize(context) {
     if (report.status !== 'SUCCESS') {
         await blocked(context);
     } else {
-        const handlers = { dev: finalizePullRequest, assets: finalizePullRequest, review: finalizeReview, spec: finalizeSpec, triage: finalizeTriage, concept: finalizeConcept, qa: finalizeQa };
+        const handlers = { dev: finalizePullRequest, assets: finalizePullRequest, review: finalizeReview, spec: finalizeSpec, triage: finalizeTriage, concept: finalizeConcept, qa: finalizeQa, build: finalizeBuild };
         const handler = handlers[pipeline.name];
         if (!handler) throw new Error(`Pas de finalizer pour ${pipeline.name}`);
         try {

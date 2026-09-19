@@ -62,11 +62,14 @@ export const PIPELINES = {
         outputs: ['review:handled', 'review'],
         budget: { maxCostUsd: 6, timeoutMin: 30, maxAttempts: 3, maxCostPerTicketUsd: 18, maxReviewPasses: 3 },
     },
+    // Maillon qui reboucle l usine : develop a avance -> release build-N avec l APK -> la QA a
+    // quelque chose a tester -> elle depose des tickets origin:qa -> triage -> dev. Sans lui, la
+    // chaine s arrete des que le lot initial de tickets est epuise.
     build: {
         runner: 'script',
         scope: 'game',
-        trigger: 'push-main',
-        budget: { maxCostUsd: 0, timeoutMin: 30, maxAttempts: 2, maxCostPerTicketUsd: 0 },
+        trigger: 'build',
+        budget: { maxCostUsd: 0, timeoutMin: 45, maxAttempts: 2, maxCostPerTicketUsd: 0 },
     },
     qa: {
         runner: 'claude-code',

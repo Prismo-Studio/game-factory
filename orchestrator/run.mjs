@@ -19,6 +19,8 @@ import { run } from './steps/run.mjs';
 import { finalize, readReport } from './steps/finalize.mjs';
 import { bootstrap } from './steps/bootstrap.mjs';
 import { scanRelease } from './steps/scan-release.mjs';
+import { scanBuild } from './steps/scan-build.mjs';
+import { buildRelease } from './steps/build.mjs';
 import { produceAsset } from './steps/assets.mjs';
 import { syncLabels } from './labels.mjs';
 
@@ -82,7 +84,15 @@ if (pipeline.name === 'bootstrap') {
 }
 
 let ticket;
-if (pipeline.trigger === 'release') {
+if (pipeline.trigger === 'build') {
+    const found = await scanBuild({ gh, org, pipeline, repo: options.repo, runId, outDir: workDir });
+    if (!found.found) {
+        console.log(`Rien a faire : ${found.reason}`);
+        setOutput('hasTicket', 'false');
+        process.exit(0);
+    }
+    ticket = found.ticket;
+} else if (pipeline.trigger === 'release') {
     const found = await scanRelease({ gh, org, pipeline, repo: options.repo, tag: options.tag, runId, outDir: workDir });
     if (!found.found) {
         console.log(`Rien a faire : ${found.reason}`);
@@ -109,7 +119,10 @@ let prepared = null;
 let stats = null;
 try {
     if (pipeline.runner === 'claude-code' || pipeline.name === 'assets') prepared = await prepare({ gh, ticket, pipeline, targetDir });
-    if (pipeline.name === 'assets') {
+    if (pipeline.name === 'build') {
+        await buildRelease({ gh, ticket, targetDir, reportFile: join(workDir, 'report.json') });
+        stats = { cost: 0, turns: 0, durationS: 0, model: 'script' };
+    } else if (pipeline.name === 'assets') {
         await produceAsset({ ticket, targetDir, reportFile: join(workDir, 'report.json') });
         stats = { cost: 0, turns: 0, durationS: 0, model: 'script' };
     } else {

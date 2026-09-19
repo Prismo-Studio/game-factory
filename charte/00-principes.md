@@ -53,3 +53,27 @@ main (`node orchestrator/run.mjs <pipeline> --issue N`) exactement comme depuis 
 à tester la tuyauterie (labels, commentaires, chaînage) sans dépenser.
 
 L'abonnement Claude n'entre jamais dans la boucle headless non-stop.
+
+## La boucle ne s arrete pas d elle-meme
+
+Le lot de tickets initial est epuisable ; l usine ne doit pas l etre. La chaine complete est un
+cycle, pas une ligne :
+
+`spec` decoupe le GDD -> `triage` route -> `dev` et `assets` produisent des PR -> `review` les
+relit -> l auto-merge les pose sur `develop` -> **`build` publie une release `build-N`** ->
+**`qa` installe cette release, y joue, et depose un ticket `triage` + `origin:qa` par ecart
+constate** -> `triage` route ces tickets -> `dev` les corrige -> `develop` avance -> `build` a
+nouveau.
+
+Les deux maillons en gras sont ceux qui referment le cycle. Sans eux, l usine s arrete en silence
+le jour ou le dernier ticket du lot initial est ferme : aucune erreur, aucun run rouge, juste plus
+rien qui nait. C est le mode de panne le plus difficile a voir, parce qu il ressemble a du travail
+termine.
+
+Consequences pratiques :
+
+- `build` et `qa` sont dans `GF_HEARTBEAT_PIPELINES` au meme titre que les autres. Les en retirer
+  arrete la generation de tickets.
+- L auto-merge reveille `build` des qu il a merge quelque chose : `develop` vient d avancer.
+- Un jeu dont le ticket `Factory control` porte `factory:paused` sort du cycle entierement, build
+  et QA compris. C est le seul bouton d arret.
