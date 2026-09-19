@@ -90,7 +90,9 @@ async function blocked({ gh, pipeline, ticket, report, stats, targetDir }) {
     const body = ownerComment({ pipeline, ticket, stats, status: 'BLOCKED', headline: `${pipeline.name} · tentative ${ticket.attempt} · ${kind}`, detail: report.reason, action: report.actionRequired });
     if (isDryRun()) return console.log(`DRY RUN, commentaire non poste :\n${body}`);
     await gh.comment(ticket.repo, ticket.number, body);
-    await gh.updateLabels(ticket.repo, ticket.number, { add: [kind], remove: [LOCK_LABEL] });
+    // Le feu vert d une passe precedente doit tomber avec le blocage : sinon l auto-merge voit
+    // encore review:handled et fusionne la PR que la revue vient de refuser.
+    await gh.updateLabels(ticket.repo, ticket.number, { add: [kind], remove: [LOCK_LABEL, 'review:handled', 'approved'] });
 }
 
 // --- pipelines qui livrent une PR (dev, assets) ---

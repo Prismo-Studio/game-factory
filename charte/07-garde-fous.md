@@ -81,3 +81,22 @@ Anthropic, les registres de paquets et rien d'autre (liste d'hôtes dans `docker
 `gf:claim` de plus de **2 heures** qu'aucune trace `gf:run` n'a suivie est considérée orpheline ; la
 pipeline reprend le ticket et pose une trace `gf:stale-claim` qui dit quel run est mort. Un run vivant
 rend toujours un rapport, même en échec, donc il n'est jamais repris à chaud.
+
+## Un refus ne se perd pas
+
+Constate le 19/09 sur pin-rescue#12 : la revue a refuse le modele livre (tige ecrasee, hors
+dimensions) et pose `needs-human`. Une minute plus tard, l auto-merge a fusionne la PR et ferme
+le ticket en `done`. Le verdict de la revue avait disparu.
+
+Cause : le ticket portait encore `review:handled` d une passe anterieure, et l auto-merge ne
+regardait que ce feu vert. Un label pose dans le passe autorisait une action dans le present.
+
+Deux verrous depuis :
+
+- un blocage retire `review:handled` et `approved` en meme temps qu il pose `needs-human` ou
+  `blocked` — le feu vert tombe avec le refus ;
+- l auto-merge refuse independamment tout ticket portant `needs-human`, `needs-human:art` ou
+  `blocked`, quel que soit l etat de ses autres labels.
+
+La regle generale : un feu vert est valable pour l etat qui l a produit, pas pour toujours. Tout
+controle qui lit un label doit se demander si un refus plus recent peut coexister avec lui.

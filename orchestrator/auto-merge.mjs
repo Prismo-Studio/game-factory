@@ -31,6 +31,10 @@ export async function mergeable(repo, pr) {
         const ticket = Number((pr.body ?? '').match(/closes\s+#(\d+)/i)?.[1]);
         if (!ticket) return 'pas de Closes #N';
         const ticketLabels = await gh.labels(repo, ticket);
+        // Verrou independant du feu vert : un ticket que la revue ou le dev vient de refuser ne
+        // se fusionne pas, meme s il porte encore un review:handled d une passe anterieure.
+        const refus = ticketLabels.find((label) => ['needs-human', 'needs-human:art', 'blocked'].includes(label));
+        if (refus) return `ticket #${ticket} porte ${refus}`;
         if (!ticketLabels.some((label) => ['review:handled', 'approved'].includes(label))) return `ticket #${ticket} pas review:handled`;
         return { ticket };
     }
