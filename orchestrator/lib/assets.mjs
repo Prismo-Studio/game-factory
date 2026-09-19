@@ -98,20 +98,41 @@ export async function findAsset(query, { maxTriangles = 2000, fetchImpl = fetch 
         attempts.push({ source: asset.id, triangles: stats.triangles });
         if (stats.triangles <= maxTriangles) return { candidate: { ...asset, license: asset.license ?? 'CC0' }, buffer, stats, scale: query.size ? fitScale(stats.size, query.size) : 1, attempts };
     }
+    // L API ne renvoie pas toujours le nombre de triangles : le seul chiffre sur lequel on peut
+    // compter est celui du .glb telecharge. On essaie donc plusieurs candidats par mot-cle et on
+    // garde le premier qui tient vraiment dans le budget, au lieu d abandonner sur le premier rate.
+    const tried = new Set();
     for (const keyword of query.keywords.slice(0, 4)) {
         const { results, skipped } = await searchPolyPizza(keyword, { fetchImpl });
         if (skipped) {
             attempts.push({ source: 'polypizza', skipped });
             break;
         }
-        const candidate = pickCandidate(results, { maxTriangles });
-        attempts.push({ source: 'polypizza', keyword, results: results.length, chosen: candidate?.id ?? null });
-        if (!candidate) continue;
-        const response = await fetchImpl(candidate.download);
-        if (!response.ok) continue;
-        const buffer = Buffer.from(await response.arrayBuffer());
-        const stats = glbStats(buffer);
-        return { candidate, buffer, stats, scale: query.size ? fitScale(stats.size, query.size) : 1, attempts };
+        const usable = results.filter((item) => licenseAllowed(item.license) && item.download && !tried.has(item.id))
+            .sort((a, b) => (a.triangles ?? Number.MAX_SAFE_INTEGER) - (b.triangles ?? Number.MAX_SAFE_INTEGER));
+        let chosen = null;
+        for (const candidate of usable.slice(0, 5)) {
+            tried.add(candidate.id);
+            let buffer;
+            let stats;
+            try {
+                const response = await fetchImpl(candidate.download);
+                if (!response.ok) continue;
+                buffer = Buffer.from(await response.arrayBuffer());
+                stats = glbStats(buffer);
+            } catch {
+                continue;
+            }
+            if (stats.triangles > maxTriangles) {
+                attempts.push({ source: 'polypizza', keyword, rejected: candidate.id, triangles: stats.triangles, budget: maxTriangles });
+                continue;
+            }
+            chosen = { candidate, buffer, stats };
+            break;
+        }
+        attempts.push({ source: 'polypizza', keyword, results: results.length, chosen: chosen?.candidate.id ?? null });
+        if (!chosen) continue;
+        return { ...chosen, scale: query.size ? fitScale(chosen.stats.size, query.size) : 1, attempts };
     }
     return { candidate: null, attempts };
 }
