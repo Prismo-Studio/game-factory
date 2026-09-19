@@ -78,9 +78,15 @@ export function alreadyReviewed(comments, sha) {
     return tracesIn(comments, 'review', (attrs) => attrs.sha === sha).length > 0;
 }
 
+// Revendications encore vivantes : dans la fenetre, et qu aucune trace gf:run n a cloturee.
+// Sans ce second filtre, la revendication d un run deja termine (meme en echec) bloquait tous
+// les suivants pendant 15 min ; avec un battement de coeur toutes les 10 min, le ticket ne
+// repartait jamais — chaque tentative laissait une nouvelle revendication morte derriere elle.
 export function claimsIn(comments, pipeline, windowMs, now = Date.now()) {
+    const ended = tracesIn(comments, 'run').map((trace) => trace.createdAt);
     return tracesIn(comments, 'claim', (attrs) => attrs.pipeline === pipeline)
         .filter((trace) => now - trace.createdAt < windowMs)
+        .filter((trace) => !ended.some((at) => at >= trace.createdAt))
         .sort((a, b) => a.createdAt - b.createdAt);
 }
 

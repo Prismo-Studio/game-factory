@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { alreadyReviewed, attempts, buildTrace, costSpent, dependencies, parseTraces, reviewPasses } from './lib/traces.mjs';
+import { alreadyReviewed, attempts, buildTrace, claimsIn, costSpent, dependencies, parseTraces, reviewPasses } from './lib/traces.mjs';
 
 const c = (body, daysAgo = 0) => ({ body, created_at: new Date(Date.now() - daysAgo * 86_400_000).toISOString() });
 
@@ -34,4 +34,16 @@ test('anti-rejeu de review', () => {
 test('dependances dans le corps', () => {
     assert.deepEqual(dependencies('Depends on #12, #13\nDepends on: #7'), [12, 13, 7]);
     assert.deepEqual(dependencies('rien'), []);
+});
+
+test('une revendication cloturee par un rapport ne bloque plus les runs suivants', () => {
+    const now = Date.now();
+    const comments = [
+        { body: buildTrace('claim', { pipeline: 'triage', run: '1' }), created_at: new Date(now - 9 * 60_000).toISOString() },
+        { body: buildTrace('run', { pipeline: 'triage', status: 'BLOCKED' }), created_at: new Date(now - 9 * 60_000).toISOString() },
+        { body: buildTrace('claim', { pipeline: 'triage', run: '2' }), created_at: new Date(now - 10_000).toISOString() },
+    ];
+    const alive = claimsIn(comments, 'triage', 15 * 60_000, now);
+    assert.equal(alive.length, 1);
+    assert.equal(alive[0].attrs.run, '2');
 });
