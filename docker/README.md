@@ -1,5 +1,8 @@
 # docker — la VM factory
 
+> Pour installer l usine sur une **deuxieme machine** (un coequipier qui apporte son propre
+> abonnement Claude), suivre [INSTALL-COEQUIPIER.md](INSTALL-COEQUIPIER.md).
+
 Une VM Debian/Ubuntu sous Proxmox, Docker installe. Deux services : le runner GitHub (Node, Claude Code,
 Godot headless + export templates, SDK Android, adb, Maestro) et Ollama.
 
