@@ -66,6 +66,15 @@ boucle), un titre travaille, des boutons avec etat presse, son et apparition dec
 transition vers le niveau — pas une substitution seche de scene. Une colonne de boutons gris sur un
 fond uni n'est pas une interface finie, c'est un blocage a remonter.
 
+Le template fournit la plomberie — `Screens`, `SafeAreaContainer`, `UiButton`, le service audio —
+**pas les ecrans**. Un jeu ne reprend jamais le HUD, le menu ou l ecran de fin d un autre jeu :
+il les dessine a partir de son propre GDD. Un compteur herite qui ne correspond a rien dans le
+jeu (des vies dans un jeu sans vies, un score dans un jeu sans score) est un defaut, pas un
+detail : il contredit le GDD et trahit un ecran recopie.
+
+Le premier reflexe sur un ticket d interface est donc de relire ce que le GDD dit que le joueur
+regarde, et de n afficher que ca.
+
 Le theme est fait main par defaut. Un pack d'interface externe est un repli, decide par un humain
 sur ticket `needs-human:art` apres avoir vu une capture du theme fait main — pas un raccourci qu'une
 pipeline choisit d'elle-meme.
