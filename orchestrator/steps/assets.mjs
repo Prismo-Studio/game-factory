@@ -4,7 +4,8 @@ import { execFileSync, spawnSync } from 'node:child_process';
 import { git } from '../lib/git.mjs';
 import { findAsset, parseArtTicket, SOURCES } from '../lib/assets.mjs';
 
-const BUDGET = { props: 300, characters: 1500, vehicles: 1200, environment: 2000, ui3d: 200 };
+// Doit rester aligne sur tools/asset_check.py du template, qui refuse l asset au-dela.
+const BUDGET = { props: 1500, characters: 3000, vehicles: 3000, environment: 3000, ui3d: 500 };
 
 // Pipeline Assets, niveau 1 et 2 de la cascade (charte 05) : bibliotheque CC0 → placeholder.
 // Script deterministe : aucun appel modele. Blender (niveau 3) viendra avec le label art:hero.

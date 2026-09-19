@@ -47,9 +47,12 @@ Règles :
 - Unité : 1 unité Godot = 1 mètre. Y vers le haut, l'avant regarde −Z.
 - Pivot en `bottom_center` sauf pour ce qui vole ou tourne (`center`), déclaré.
 - `bounds` est la boîte réelle après export ; `make asset-check` la recalcule et refuse un écart > 2 %.
-- Budget triangles par catégorie : `props` ≤ 300, `characters` ≤ 1500, `vehicles` ≤ 1200,
-  `environment` ≤ 2000, `ui3d` ≤ 200. Dépassement = refus.
-- Un seul mesh, un seul matériau, pas de hiérarchie inutile. Les points d'attache sont des `Marker3D`
+- Budget triangles par catégorie : `props` ≤ 1500, `characters` ≤ 3000, `vehicles` ≤ 3000,
+  `environment` ≤ 3000, `ui3d` ≤ 500. Dépassement = refus. Ces budgets sont larges à dessein :
+  un téléphone encaisse des centaines de milliers de triangles par image, et des budgets serrés
+  faisaient refuser tous les modèles CC0 au profit de placeholders.
+- Un seul mesh. Un seul matériau pour un asset fait maison (placeholder, Blender) ; jusqu'à trois
+  pour un modèle de bibliothèque, qui arrive rarement en matériau unique. Pas de hiérarchie inutile. Les points d'attache sont des `Marker3D`
   du prefab, générés depuis le JSON, pas modélisés.
 - `.glb` ≤ 2 Mo commité ; au-delà, Release + référence dans le JSON (`"blob": "release:build-12/…"`) —
   et une question sur la raison, un asset low poly de 2 Mo n'est pas low poly.
