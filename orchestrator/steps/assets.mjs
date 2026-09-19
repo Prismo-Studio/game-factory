@@ -1,6 +1,6 @@
-import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { execFileSync } from 'node:child_process';
+import { execFileSync, spawnSync } from 'node:child_process';
 import { git } from '../lib/git.mjs';
 import { findAsset, parseArtTicket, SOURCES } from '../lib/assets.mjs';
 
@@ -44,13 +44,30 @@ export async function produceAsset({ ticket, targetDir, reportFile }) {
     }
     if (meta) writeFileSync(join(folder, `${query.name}.asset.json`), JSON.stringify(meta, null, 2));
     execFileSync('python3', ['tools/asset_prefab.py', query.name], { cwd: targetDir, stdio: 'inherit' });
-    execFileSync('python3', ['tools/asset_check.py'], { cwd: targetDir, stdio: 'inherit' });
+    // Un modele de bibliotheque qui ne respecte pas le contrat (plusieurs meshes, bounds hors tolerance…)
+    // n est pas une erreur d infrastructure : on retombe sur le placeholder, en gardant le motif dans le rapport.
+    const check = spawnSync('python3', ['tools/asset_check.py'], { cwd: targetDir, encoding: 'utf8' });
+    let rejected = null;
+    if (check.status !== 0) {
+        const detail = `${check.stdout ?? ''}${check.stderr ?? ''}`.trim().split('\n').slice(-6).join('\n');
+        if (placeholder) throw new Error(`asset_check refuse le placeholder : ${detail}`);
+        rejected = { candidate: found.candidate.id, detail };
+        console.log(`Modele ${found.candidate.id} refuse par asset_check, placeholder a la place :\n${detail}`);
+        for (const file of readdirSync(folder)) if (file !== `${query.name}.tscn`) rmSync(join(folder, file), { force: true });
+        placeholder = true;
+        execFileSync('python3', ['tools/bpy/placeholder.py', query.name, query.category, ...query.size.map(String), query.pivot, query.collision, String(ticket.number)], { cwd: targetDir, stdio: 'inherit' });
+        meta = null;
+        execFileSync('python3', ['tools/asset_prefab.py', query.name], { cwd: targetDir, stdio: 'inherit' });
+        execFileSync('python3', ['tools/asset_check.py'], { cwd: targetDir, stdio: 'inherit' });
+    }
 
     git(['add', '-A'], targetDir);
     git(['commit', '-q', '-m', `art(#${ticket.number}): ${placeholder ? 'placeholder' : 'library asset'} ${query.name}`, '-m', placeholder ? 'No CC0 match found: placeholder respecting the asset contract.' : `Source ${meta.source}, ${meta.triangles} triangles, scale ${meta.scale}. ${meta.attribution}`, '-m', `Closes #${ticket.number}`], targetDir);
 
-    const summary = placeholder
-        ? `Aucun modele CC0 trouve pour « ${query.keywords.join(', ')} » (${found.attempts.map((item) => item.source + (item.skipped ? ' ignore : ' + item.skipped : '')).join(' ; ')}) : placeholder conforme pose, un humain fournira l asset.`
+    const summary = rejected
+        ? `Modele ${rejected.candidate} trouve mais refuse par asset_check (${rejected.detail.replace(/\s+/g, ' ').slice(0, 300)}) : placeholder conforme pose. Corriger les mots-cles Recherche du ticket ou fournir l asset.`
+        : placeholder
+        ? `Aucun modele CC0 trouve pour « ${query.keywords.join(', ')} » (${found.attempts.map((item) => item.source + (item.skipped ? ' ignore : ' + item.skipped : item.keyword ? ` ${item.keyword}=${item.results}` : '')).join(' ; ')}) : placeholder conforme pose, un humain fournira l asset.`
         : `Asset ${query.name} pris dans ${found.candidate.id} (${meta.triangles} triangles, licence ${meta.license}), mis a l echelle ${meta.scale} et pivote ${query.pivot}. Attribution : ${meta.attribution}.`;
     writeFileSync(reportFile, JSON.stringify({
         status: 'SUCCESS', ticket: ticket.number, placeholder, summary,
