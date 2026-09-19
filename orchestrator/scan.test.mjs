@@ -67,3 +67,19 @@ test('triage ignore les dependances', () => {
     const triage = pipelineConfig('triage');
     assert.ok(eligibility(issue(['triage'], 'Depends on #4'), [], triage).ok);
 });
+
+test('verrou orphelin : in-progress sans rapport depuis 3 h est repris', () => {
+    const old = new Date(Date.now() - 3 * 3_600_000).toISOString();
+    const issue = { labels: [{ name: 'todo:ui' }, { name: 'in-progress' }], body: '' };
+    const comments = [{ body: '<!-- gf:claim pipeline=dev run=99 -->', created_at: old }];
+    const verdict = eligibility(issue, comments, pipelineConfig('dev'));
+    assert.equal(verdict.ok, true);
+    assert.equal(verdict.stale.run, '99');
+});
+
+test('verrou frais : in-progress depuis 5 min reste verrouille', () => {
+    const fresh = new Date(Date.now() - 5 * 60_000).toISOString();
+    const issue = { labels: [{ name: 'todo:ui' }, { name: 'in-progress' }], body: '' };
+    const comments = [{ body: '<!-- gf:claim pipeline=dev run=99 -->', created_at: fresh }];
+    assert.equal(eligibility(issue, comments, pipelineConfig('dev')).ok, false);
+});

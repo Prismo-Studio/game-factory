@@ -73,3 +73,11 @@ Un secret collé dans un ticket ou un commentaire est révoqué, pas réutilisé
 Le conteneur du runner ne monte aucun volume de l'hôte hors ses caches, n'expose aucun port, n'a pas le
 socket Docker. Pas de domaine, pas de port ouvert vers l'extérieur : le runner sort vers GitHub, l'API
 Anthropic, les registres de paquets et rien d'autre (liste d'hôtes dans `docker/README.md`).
+
+## Verrou orphelin
+
+`in-progress` bloque le ticket tant qu'il est posé. Si le run qui l'a posé meurt sans rendre de rapport
+(PC éteint, Docker arrêté, job annulé), le verrou resterait indéfiniment. Règle : une revendication
+`gf:claim` de plus de **2 heures** qu'aucune trace `gf:run` n'a suivie est considérée orpheline ; la
+pipeline reprend le ticket et pose une trace `gf:stale-claim` qui dit quel run est mort. Un run vivant
+rend toujours un rapport, même en échec, donc il n'est jamais repris à chaud.

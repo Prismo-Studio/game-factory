@@ -2,14 +2,20 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { env, isDryRun, slugify, warn } from '../lib/env.mjs';
 import { claimIssue, msSinceLastClaim } from '../lib/claim.mjs';
-import { attempts, buildTrace, costSpent, dependencies, reviewPasses, tracesIn } from '../lib/traces.mjs';
-import { EXCLUDED_LABELS, GAME_TOPIC, PAUSE_LABEL, PRIORITY_LABEL, RESET_LABEL } from '../pipelines.mjs';
+import { attempts, buildTrace, costSpent, dependencies, reviewPasses, staleClaim, tracesIn } from '../lib/traces.mjs';
+import { EXCLUDED_LABELS, GAME_TOPIC, LOCK_LABEL, PAUSE_LABEL, PRIORITY_LABEL, RESET_LABEL } from '../pipelines.mjs';
 
 // Pure : decide si un ticket est prenable (teste dans scan.test.mjs).
 export function eligibility(issue, comments, pipeline, { doneNumbers = new Set() } = {}) {
     const labels = (issue.labels ?? []).map((label) => (typeof label === 'string' ? label : label.name));
     if (!pipeline.inputLabels.some((label) => labels.includes(label))) return { ok: false, reason: 'pas le label d entree' };
-    for (const label of EXCLUDED_LABELS) if (labels.includes(label)) return { ok: false, reason: `label ${label}` };
+    // Verrou orphelin (run tue : PC eteint, Docker arrete) : on le reprend au lieu d attendre un humain.
+    const stale = labels.includes(LOCK_LABEL) ? staleClaim(comments) : null;
+    for (const label of EXCLUDED_LABELS) {
+        if (!labels.includes(label)) continue;
+        if (label === LOCK_LABEL && stale) continue;
+        return { ok: false, reason: `label ${label}` };
+    }
     const tries = attempts(comments, pipeline.name);
     if (tries >= pipeline.budget.maxAttempts) return { ok: false, reason: `tentatives epuisees (${tries}/${pipeline.budget.maxAttempts})`, exhaust: true };
     const spent = costSpent(comments, pipeline.name);
@@ -21,7 +27,7 @@ export function eligibility(issue, comments, pipeline, { doneNumbers = new Set()
     }
     const deps = pipeline.ignoreDependencies ? [] : dependencies(issue.body).filter((number) => !doneNumbers.has(number));
     if (deps.length) return { ok: false, reason: `depend de #${deps.join(', #')} non termine(s)` };
-    return { ok: true, priority: labels.includes(PRIORITY_LABEL) ? 1 : 0, attempts: tries };
+    return { ok: true, priority: labels.includes(PRIORITY_LABEL) ? 1 : 0, attempts: tries, stale };
 }
 
 async function gameRepos(gh, org) {
@@ -78,6 +84,9 @@ export async function scan({ gh, pipeline, org, repo: forcedRepo, issue: forcedI
             if (!verdict.ok) {
                 console.log(`  ${repo}#${issue.number} ignore : ${verdict.reason}`);
                 continue;
+            }
+            if (verdict.stale && !isDryRun()) {
+                await gh.comment(repo, issue.number, `${buildTrace('stale-claim', { pipeline: verdict.stale.pipeline, run: verdict.stale.run, age_min: verdict.stale.ageMin })}\nVerrou orphelin : le run ${verdict.stale.run} de ${verdict.stale.pipeline} n a jamais rendu de rapport (${verdict.stale.ageMin} min). Le ticket est repris.`);
             }
             candidates.push({ repo, issue, comments, priority: verdict.priority, attempts: verdict.attempts });
         }

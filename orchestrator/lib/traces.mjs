@@ -92,3 +92,12 @@ export function dependencies(body) {
     }
     return [...numbers];
 }
+
+// Verrou orphelin : une revendication plus vieille que `staleMs` qu aucune trace gf:run n a suivie.
+// Cas typique : le PC (ou Docker) s arrete au milieu d un run, le label in-progress reste pour toujours.
+export function staleClaim(comments, { staleMs = 2 * 3_600_000, now = Date.now() } = {}) {
+    const claim = tracesIn(comments, 'claim').at(-1);
+    if (!claim || now - claim.createdAt < staleMs) return null;
+    const ended = tracesIn(comments, 'run').some((trace) => trace.createdAt >= claim.createdAt);
+    return ended ? null : { pipeline: claim.attrs.pipeline, run: claim.attrs.run, ageMin: Math.round((now - claim.createdAt) / 60_000) };
+}
