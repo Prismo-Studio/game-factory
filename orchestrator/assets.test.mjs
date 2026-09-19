@@ -41,3 +41,11 @@ test('echelle et lecture glb', () => {
     assert.equal(stats.triangles, 12);
     assert.deepEqual(stats.size, [2, 2, 2]);
 });
+
+test('le nom ne peut pas venir d une phrase du contexte', () => {
+    const body = '## Contexte\nMeme nom, meme dossier : le glb et l asset.json ecrasent le placeholder.\n\n## A faire\n- Nom : `track_segment`, categorie `environment`\n- Dimensions cibles : 2 x 0.3 x 4 m\n- Recherche : road segment, platform\n- Usage : la piste';
+    const query = parseArtTicket(body);
+    assert.equal(query.name, 'track_segment');
+    assert.equal(query.category, 'environment');
+    assert.equal(query.keywords[0], 'road segment');
+});

@@ -10,7 +10,9 @@ export const SOURCES = JSON.parse(readFileSync(resolve(here, '..', '..', 'assets
 // --- ticket art → requete ---
 export function parseArtTicket(body) {
     const text = String(body ?? '');
-    const field = (label) => text.match(new RegExp(`${label}[^\\n]*?[:：]\\s*\`?([^\\n\`]+)`, 'i'))?.[1]?.trim();
+    // Le libelle doit ouvrir sa ligne (gabarit « - Nom : `x` ») : sinon une phrase du contexte
+    // comme « meme nom, meme dossier : le glb… » serait lue comme le nom de l asset.
+    const field = (label) => text.match(new RegExp(`^[-*\\s]*\\*{0,2}(?:${label})\\*{0,2}[^\\n:：]*[:：]\\s*\`?([^\\n\`]+)`, 'im'))?.[1]?.trim();
     const name = (field('Nom') ?? '').match(/[a-z0-9_]+/)?.[0] ?? text.match(/`([a-z0-9_]+)`/)?.[1];
     const category = (field('Cat[ée]gorie') ?? text.match(/cat[ée]gorie\s*`?(\w+)/i)?.[1] ?? '').toLowerCase().match(/props|characters|vehicles|environment|ui3d/)?.[0];
     const dims = (field('Dimensions') ?? text).match(/(\d+(?:[.,]\d+)?)\s*[x×]\s*(\d+(?:[.,]\d+)?)\s*[x×]\s*(\d+(?:[.,]\d+)?)/i);
