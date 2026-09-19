@@ -16,6 +16,17 @@ La production suit une cascade, du moins cher au plus cher (registre dans `asset
 La génération 3D par IA n'entre pas dans la boucle. Le contrat, lui, est stable : tout ce qui produit un
 asset — pipeline, humain, script — le respecte. Les attributions CC-BY vont dans `game/CREDITS.md`.
 
+## Ce qui ne part jamais en production
+
+Un pack de prototypage (`prototype_bits` et equivalents : boites grises non texturees) n est pas
+une source d asset, c est du blocking. La cascade l ecarte, sauf si le ticket demande
+explicitement `primitive` ou `prototype` dans son champ Recherche. Un jeu livre avec des formes
+grises a l air casse, meme si chaque asset respecte le contrat.
+
+Meme regle pour le rendu : un fluide plat, une grille de debug visible, un `Label` par defaut
+sont des etats de chantier. Ils n arrivent jamais sur `main`. Une capture du playthrough qui en
+montre un est un defaut a remonter, pas un detail de finition.
+
 ## Style
 
 Low poly, flat shading, palette limitée. Une seule texture palette par jeu

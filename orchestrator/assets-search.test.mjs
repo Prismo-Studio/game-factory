@@ -29,3 +29,16 @@ test('aucun mot-cle ne correspond : le modele est ecarte', () => {
     assert.equal(scoreAsset(asset('torch', ['torch']), ticket('hero', 'characters', 'knight')), 0);
     assert.deepEqual(searchLocalIndex(ticket('hero', 'characters', 'knight'), { assets: [asset('torch', ['torch'])] }), []);
 });
+
+test('un modele de pack de prototypage est ecarte', () => {
+    const query = ticket('pin', 'props', 'pillar, column');
+    const proto = asset('primitive_pillar', ['primitive', 'pillar'], 'prototype_bits/x.glb');
+    const real = asset('column', ['column', 'dungeon'], 'dungeon/x.glb');
+    assert.equal(scoreAsset(proto, query), 0);
+    assert.ok(scoreAsset(real, query) > 0);
+});
+
+test('sauf si le ticket demande explicitement du prototypage', () => {
+    const query = ticket('blockout', 'props', 'primitive, cube');
+    assert.ok(scoreAsset(asset('primitive_cube', ['primitive', 'cube'], 'prototype_bits/x.glb'), query) > 0);
+});

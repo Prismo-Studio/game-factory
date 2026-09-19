@@ -48,9 +48,20 @@ const CATEGORY_TAGS = {
     ui3d: ['ui', 'icons'],
 };
 
+// Packs de prototypage : des boites grises non texturees, faites pour bloquer un niveau avant
+// d avoir l art. Techniquement ce sont des modeles de bibliotheque, visuellement ce sont des
+// placeholders — et un jeu livre avec ca a l air casse. Ecartes, sauf si le ticket les demande.
+const PROTOTYPE_PACKS = new Set(['prototype_bits', 'prototype', 'kenney_prototype', 'greybox']);
+const PROTOTYPE_WORDS = new Set(['primitive', 'prototype', 'greybox', 'blockout']);
+
+export function isPrototype(asset) {
+    return PROTOTYPE_PACKS.has(String(asset.file ?? '').split('/')[0]) || String(asset.name).startsWith('primitive_');
+}
+
 // Un modele dont le nom EST le mot-cle est le bon ; un modele dont le nom contient le mot-cle
 // parmi d autres est un modele plus specifique, qui n est le bon que faute de mieux.
 export function scoreAsset(asset, query) {
+    if (isPrototype(asset) && !query.keywords.some((keyword) => PROTOTYPE_WORDS.has(keyword))) return 0;
     const words = String(asset.name).split(/[-_ .]+/).filter(Boolean);
     let score = 0;
     for (const keyword of query.keywords) {
