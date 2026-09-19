@@ -21,7 +21,7 @@ export const FORBIDDEN_PATHS = [
     { pattern: /\.godot-version\b/i, reason: 'version Godot pinnee' },
     { pattern: /(^|[\/\\\s"'])Makefile\b/i, reason: 'commandes de verification' },
     { pattern: /(^|[\/\\\s"'])CLAUDE\.md\b/i, reason: 'instructions du jeu' },
-    { pattern: /(^|[\/\\\s"'])game[\/\\]core[\/\\]/i, reason: 'services du template : un jeu les utilise, ne les modifie pas' },
+    { pattern: /(^|[\/\\\s"'])game[\/\\]core[\/\\]/i, reason: 'services du template : un jeu les utilise, ne les modifie pas (cles de sauvegarde : game/meta/save_schema.gd)' },
     { pattern: /\.(keystore|jks|pfx|pem|key)\b/i, reason: 'keystore ou cle' },
     { pattern: /(^|[\/\\\s"'])\.env(\.|\b)/i, reason: 'secret' },
     { pattern: /secrets?[^\/\\]*\.(json|ya?ml|txt|cfg)\b/i, reason: 'secret' },
