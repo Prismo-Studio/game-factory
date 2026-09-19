@@ -33,7 +33,15 @@ CONFIG_DIR=/home/runner/runner-config
 if [[ -f "$CONFIG_DIR/.runner" && -f "$CONFIG_DIR/.credentials" ]]; then
     cp "$CONFIG_DIR"/.runner "$CONFIG_DIR"/.credentials* . 2>/dev/null || true
     echo "Runner deja enregistre (${GF_RUNNER_NAME}) : reprise sans nouveau token."
-    exec ./run.sh
+    # Pas d `exec` : GitHub supprime l enregistrement d un runner reste trop longtemps
+    # deconnecte. run.sh sort alors sur « The runner registration has been deleted from the
+    # server », le conteneur redemarre, relit la meme config morte, et boucle indefiniment.
+    # On reprend donc la main apres run.sh pour jeter l identite et se reenregistrer.
+    if ./run.sh; then
+        exit 0
+    fi
+    echo "run.sh s est arrete : enregistrement probablement supprime cote GitHub. Reconfiguration."
+    rm -f "$CONFIG_DIR"/.runner "$CONFIG_DIR"/.credentials* .runner .credentials*
 fi
 
 # Un PAT (ghp_/github_pat_) est echange contre un token de registration ; un token de registration (A…) est utilise tel quel.
@@ -44,6 +52,11 @@ if [[ "$GF_RUNNER_TOKEN" == ghp_* || "$GF_RUNNER_TOKEN" == github_pat_* ]]; then
     [[ "$REG_TOKEN" != "null" && -n "$REG_TOKEN" ]] || { echo "Impossible d obtenir un token de registration (PAT sans admin:org ?)"; sleep 60; exit 1; }
 else
     REG_TOKEN="$GF_RUNNER_TOKEN"
+    # Un token de registration expire en une heure. Il depanne pour une premiere installation,
+    # mais tout reenregistrement ulterieur (identite nettoyee par GitHub, volume supprime)
+    # echouera en 404 et le conteneur bouclera. Un PAT avec manage_runners regle cela une fois
+    # pour toutes : l entrypoint fabrique alors un token neuf a chaque demarrage.
+    echo "Note : GF_RUNNER_TOKEN est un token de registration (valide 1 h). Un PAT admin:org/manage_runners eviterait toute reinstallation future."
 fi
 
 # Pas de desenregistrement a l arret : l identite est conservee dans le volume (supprimer le runner

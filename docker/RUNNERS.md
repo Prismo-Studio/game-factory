@@ -70,3 +70,31 @@ trouvent rien et se terminent en quelques dizaines de secondes, mais ils occupen
 passent devant les vrais travaux. Si la file est longue mais que les runs se terminent en moins
 d une minute, ce n est pas un manque de capacite : c est le battement de coeur qui est trop
 rapide. Augmenter `GF_HEARTBEAT_EVERY_S` (1800 s est un bon reglage) avant d ajouter du materiel.
+
+## Un runner qui boucle au demarrage
+
+Deux causes, et elles ne se soignent pas pareil.
+
+**« Http response code: NotFound … 404 » pendant l enregistrement.** Le token de
+`GF_RUNNER_TOKEN` a expire : un token de registration ne vaut qu une heure. En reprendre un sur
+`https://github.com/organizations/<org>/settings/actions/runners/new` (la valeur apres
+`--token`), le coller dans `docker/.env`, puis `docker compose up -d <service>`.
+
+**« The runner registration has been deleted from the server. »** GitHub a nettoye
+l enregistrement d un runner reste trop longtemps hors ligne. Le conteneur retrouve alors sa
+config locale dans le volume, la croit valide, et boucle. Il faut lui effacer son identite :
+
+```
+docker compose stop runner
+docker compose rm -f runner          # sans cela le volume est « in use »
+docker volume rm docker_runner-config
+docker compose up -d runner
+```
+
+Le volume `runner-config` ne contient que l identite du runner : les caches Godot et Gradle sont
+dans d autres volumes et survivent.
+
+Depuis la correction de l entrypoint, ce deuxieme cas se repare seul : le script reprend la main
+apres `run.sh`, jette l identite morte et se reenregistre — a condition que `GF_RUNNER_TOKEN`
+soit encore valide a ce moment-la, ce qui est la raison d y mettre un PAT plutot qu un token de
+registration.
