@@ -16,6 +16,26 @@ export function derive(title) {
     return { slug, packageName, displayName };
 }
 
+// Colle dans le GDD de chaque nouveau jeu : le GDD est joint a tous les tickets de jeu, donc
+// tout agent qui touche a l interface la lit, sans dependre du decoupage initial.
+const IDENTITY_RULE = [
+    '## Identite visuelle — contrainte permanente',
+    '',
+    'Ce jeu ne reprend l identite d aucun autre jeu du studio. Les jeux partagent des packs',
+    'd assets, des services et des pipelines ; jamais une palette, une typographie ou un ecran.',
+    'Un joueur qui ouvre deux jeux du studio ne doit pas pouvoir deviner qu ils sortent de la meme',
+    'chaine.',
+    '',
+    '- Palette propre a ce jeu, tiree de ce qu il montre a l ecran. Cinq teintes.',
+    '- Typographie propre a ce jeu, jamais la police par defaut de Godot.',
+    '- Menu, HUD, ecran de fin et boutique redessines a partir de ce GDD. Le template fournit la',
+    '  plomberie (Screens, SafeAreaContainer, UiButton, audio), pas les ecrans.',
+    '- Tout element d interface present sans que ce GDD le demande est un defaut : un compteur de',
+    '  vies dans un jeu sans vies trahit un ecran recopie.',
+    '',
+    'Voir charte 00, « Chaque jeu a sa propre identite ».',
+].join('\n');
+
 export async function bootstrap({ gh, org, pipeline, ticket, workDir }) {
     const { slug, packageName, displayName } = derive(ticket.title);
     const repo = `${org}/${slug}`;
@@ -69,7 +89,7 @@ export async function bootstrap({ gh, org, pipeline, ticket, workDir }) {
         if (!spec) {
             spec = await gh.createIssue(repo, {
                 title: `GDD — ${displayName}`,
-                body: [ticket.body, '', `Concept d origine : ${ticket.url}`, buildTrace('gdd', { concept: ticket.number, package: packageName })].join('\n'),
+                body: [ticket.body, '', IDENTITY_RULE, '', `Concept d origine : ${ticket.url}`, buildTrace('gdd', { concept: ticket.number, package: packageName })].join('\n'),
                 labels: ['spec'],
             });
         }

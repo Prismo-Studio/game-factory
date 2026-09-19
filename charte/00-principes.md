@@ -86,3 +86,28 @@ Consequences pratiques :
   des semaines, et les faire bloquer la boucle reviendrait a l arreter.
 - Un jeu dont le ticket `Factory control` porte `factory:paused` sort du cycle entierement, promotion
   et QA comprises. C est le seul bouton d arret.
+
+## Chaque jeu a sa propre identite
+
+Les jeux de l usine partagent des packs d assets, des services et des pipelines. Ils ne partagent
+jamais une identite. Un joueur qui ouvre deux jeux du studio ne doit pas pouvoir deviner qu ils
+sortent de la meme chaine.
+
+Concretement, sur chaque nouveau jeu :
+
+- **Palette differente.** Pas la palette du jeu precedent avec deux teintes changees : une
+  palette pensee pour ce jeu-la, tiree de ce qu il montre a l ecran.
+- **Typographie differente.** La police fait la moitie du caractere d une interface mobile.
+- **Ecrans redessines.** Le template fournit `Screens`, `SafeAreaContainer`, `UiButton`, l audio :
+  la plomberie. Le menu, le HUD, l ecran de fin et la boutique se dessinent a partir du GDD du
+  jeu. Reprendre l ecran d un autre jeu, c est copier ses compteurs avec — d ou des vies dans un
+  jeu sans vies.
+- **Rien d herite en silence.** Tout element d interface present sans que le GDD le demande est
+  un defaut, pas un acquis.
+
+Le premier ticket d interface de tout nouveau jeu est donc un ticket d identite visuelle
+(palette, typographie, regle de contraste), dont depend le theme, dont dependent tous les
+ecrans. C est une obligation du decoupage, pas une option.
+
+Ce n est pas une coquetterie : un portefeuille de jeux qui se ressemblent se fait reperer comme
+de la production en serie, par les joueurs comme par les stores.
