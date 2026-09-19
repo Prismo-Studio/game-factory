@@ -85,6 +85,9 @@ export function assemblePrompt({ pipeline, ticket, prepared, attachments, review
         '',
         ticket.comments || '(aucun)',
     );
+    if (ticket.gdd) {
+        sections.push('', `### GDD du jeu (issue #${ticket.gdd.number})`, '', 'Reference : le ticket peut y renvoyer sans le recopier. En cas de contradiction entre le ticket et le GDD, le ticket gagne — il est plus recent.', '', ticket.gdd.body);
+    }
     if (attachments?.length) {
         sections.push('', '### Pieces jointes', '', ...attachments.map((item) => (item.readable ? `- ${item.file} — ouvre-la avec Read` : `- ${item.url} — NON LISIBLE : ${item.reason}`)));
     }

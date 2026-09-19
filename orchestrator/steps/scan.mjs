@@ -30,6 +30,15 @@ export function eligibility(issue, comments, pipeline, { doneNumbers = new Set()
     return { ok: true, priority: labels.includes(PRIORITY_LABEL) ? 1 : 0, attempts: tries, stale };
 }
 
+// Le GDD est la seule description du jeu. Un ticket qui y renvoie (« le format decrit dans le
+// GDD ») est intraitable sans lui : l agent ne voit que le corps du ticket et se declare
+// needs-human. On le joint donc a tout ticket de jeu, comme la QA le fait deja pour les releases.
+export async function gameDesignDocument(gh, repo) {
+    const issues = [...await gh.listIssues(repo, { labels: ['spec:done'], state: 'all' }), ...await gh.listIssues(repo, { labels: ['spec'], state: 'all' })];
+    const gdd = issues[0];
+    return gdd ? { number: gdd.number, title: gdd.title, body: gdd.body ?? '' } : null;
+}
+
 async function gameRepos(gh, org) {
     const repos = await gh.listOrgRepos(org, { topic: GAME_TOPIC });
     const active = [];
@@ -113,11 +122,13 @@ export async function scan({ gh, pipeline, org, repo: forcedRepo, issue: forcedI
     const humanComments = comments.filter((comment) => !/<!--\s*gf:/.test(comment.body ?? ''));
     const attachments = [...String(issue.body ?? '').matchAll(/!\[[^\]]*\]\((https?:\/\/[^\s)]+)\)|(https:\/\/github\.com\/user-attachments\/assets\/[^\s)]+)/g)]
         .map((match) => match[1] ?? match[2]);
+    const gdd = pipeline.scope === 'game' && !labels.includes('spec') ? await gameDesignDocument(gh, repo).catch(() => null) : null;
     const ticket = {
         repo,
         number: issue.number,
         title: issue.title,
         body: issue.body ?? '',
+        gdd: gdd && gdd.number !== issue.number ? gdd : null,
         labels,
         inputLabel,
         domain: pipeline.contextFor ? pipeline.contextFor(labels) : undefined,
