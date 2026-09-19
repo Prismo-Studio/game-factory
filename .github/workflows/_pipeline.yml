@@ -52,6 +52,7 @@ jobs:
           GF_LLM_BACKEND: ${{ vars.GF_LLM_BACKEND || 'ollama' }}
           GF_OLLAMA_MODEL: ${{ vars.GF_OLLAMA_MODEL || 'qwen2.5:14b' }}
           GF_MODEL: ${{ vars.GF_MODEL }}
+          GF_ASSET_LIBRARY: ${{ vars.GF_ASSET_LIBRARY || '/assets-library' }}
           GF_DRY_RUN: ${{ inputs.dry_run }}
           GF_WORK: ${{ runner.temp }}/gf
         run: >

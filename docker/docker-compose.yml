@@ -13,10 +13,14 @@ services:
             GF_RUNNER_LABELS: gf
             GF_RUNNER_NAME: ${GF_RUNNER_NAME:-gf-local}
             GF_OLLAMA_URL: http://ollama:11434
+            # Bibliotheque d assets locale (packs achetes/CC0) : niveau 1 de la cascade,
+            # avant l API Poly Pizza et le placeholder. Voir docker/ASSETS.md.
+            GF_ASSET_LIBRARY: /assets-library
         # adb vers Waydroid (sur l hote, port 5555) ou un telephone en TCP : renseigner GF_ADB_HOST dans .env.
         extra_hosts:
             - "host.docker.internal:host-gateway"
         volumes:
+            - ${GF_ASSET_LIBRARY_HOST:-../../assets-library}:/assets-library:ro
             - runner-work:/home/runner/actions-runner/_work
             - runner-config:/home/runner/runner-config
             - claude-config:/home/runner/.claude
@@ -41,6 +45,7 @@ services:
             <<: *runner_env
             GF_RUNNER_NAME: ${GF_RUNNER_NAME:-gf-local}-2
         volumes:
+            - ${GF_ASSET_LIBRARY_HOST:-../../assets-library}:/assets-library:ro
             - runner-work-2:/home/runner/actions-runner/_work
             - runner-config-2:/home/runner/runner-config
             - claude-config:/home/runner/.claude
@@ -63,6 +68,21 @@ services:
             - ../:/factory:ro
         command: ["node", "orchestrator/heartbeat.mjs"]
         mem_limit: 256m
+
+    # Indexation de la bibliotheque : a relancer apres chaque pack ajoute/retire.
+    #   docker compose run --rm assets-index
+    # Monte en ecriture car le script ecrit index.json a la racine de la bibliotheque.
+    assets-index:
+        image: node:22-alpine
+        profiles: ["tools"]
+        environment:
+            GF_ASSET_LIBRARY: /assets-library
+        working_dir: /factory
+        volumes:
+            - ../:/factory:ro
+            - ${GF_ASSET_LIBRARY_HOST:-../../assets-library}:/assets-library
+        command: ["node", "orchestrator/assets-index.mjs"]
+        mem_limit: 1g
 
     ollama:
         image: ollama/ollama:latest
