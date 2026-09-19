@@ -37,7 +37,7 @@ services:
                 max-size: 50m
                 max-file: "3"
 
-    # Deuxieme runner (32 Go de RAM ou plus) : dev + ci, ou dev + review, en parallele.
+    # Deuxieme et troisieme runners (32 Go de RAM ou plus, voir docker/RUNNERS.md pour .wslconfig).
     # Identite et _work separes ; login Claude, cache Godot et Gradle partages.
     runner-2:
         <<: *runner
@@ -51,6 +51,25 @@ services:
             - claude-config:/home/runner/.claude
             - godot-cache:/home/runner/.local/share/godot
             - gradle-cache:/home/runner/.gradle
+
+    # Troisieme runner : profil `tri` pour ne pas le demarrer par defaut. Sur une machine a
+    # 32 Go, il n a de sens qu avec un .wslconfig qui laisse au moins 24 Go a Docker.
+    #   docker compose --profile tri up -d
+    runner-3:
+        <<: *runner
+        profiles: ["tri"]
+        environment:
+            <<: *runner_env
+            GF_RUNNER_NAME: ${GF_RUNNER_NAME:-gf-local}-3
+        volumes:
+            - ${GF_ASSET_LIBRARY_HOST:-../../assets-library}:/assets-library:ro
+            - runner-work-3:/home/runner/actions-runner/_work
+            - runner-config-3:/home/runner/runner-config
+            - claude-config:/home/runner/.claude
+            - godot-cache:/home/runner/.local/share/godot
+            - gradle-cache:/home/runner/.gradle
+        mem_limit: 5g
+        cpus: 3
 
 
     # Battement de coeur : reveille les pipelines toutes les 10 min. Les crons GitHub Actions
@@ -98,13 +117,17 @@ services:
         volumes:
             - ollama:/root/.ollama
         # Modele tire une fois : docker compose exec ollama ollama pull qwen2.5:14b
-        mem_limit: 12g
+        # 9 Go suffisent a qwen2.5:14b quantise. Les 3 Go liberes vont au troisieme runner :
+        # le triage tourne quelques secondes par ticket, un runner tourne des dizaines de minutes.
+        mem_limit: 9g
 
 volumes:
     runner-work:
     runner-config:
     runner-work-2:
     runner-config-2:
+    runner-work-3:
+    runner-config-3:
     claude-config:
     godot-cache:
     gradle-cache:
