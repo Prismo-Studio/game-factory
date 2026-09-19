@@ -6,15 +6,14 @@ import { LOCK_LABEL, CLAIM_WINDOW_MS } from '../pipelines.mjs';
 export async function claimIssue(gh, repo, number, { pipeline, runId, lock = true, windowMs = CLAIM_WINDOW_MS }) {
     // Le verrou n est pose qu APRES avoir gagne la course : le poser avant laissait un
     // in-progress orphelin sur le ticket quand ce run perdait et repartait sans rien faire.
-    await gh.comment(repo, number, `${buildTrace('claim', { pipeline, run: runId })}\nPrise en charge par ${pipeline} (run ${runId}).`);
+    const posted = await gh.comment(repo, number, `${buildTrace('claim', { pipeline, run: runId })}\nPrise en charge par ${pipeline} (run ${runId}).`);
     const comments = await gh.listComments(repo, number);
     const winner = claimsIn(comments, pipeline, windowMs)[0];
-    if (!winner) {
-        console.log(`  #${number} : revendication introuvable apres ecriture, on passe.`);
-        return false;
-    }
-    if (winner.attrs.run !== String(runId)) {
-        console.log(`  #${number} : deja revendique par le run ${winner.attrs.run}.`);
+    // Le perdant retire sa revendication : laissee en place, elle bloquerait tous les runs
+    // suivants jusqu a la fin de la fenetre alors que personne ne travaille sur le ticket.
+    if (!winner || winner.attrs.run !== String(runId)) {
+        if (posted?.id) await gh.deleteComment(repo, posted.id);
+        console.log(winner ? `  #${number} : deja revendique par le run ${winner.attrs.run}.` : `  #${number} : revendication introuvable apres ecriture, on passe.`);
         return false;
     }
     if (lock) await gh.addLabels(repo, number, [LOCK_LABEL]);

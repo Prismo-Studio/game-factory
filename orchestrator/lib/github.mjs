@@ -109,6 +109,14 @@ export class GitHub {
         return this.request('POST', `/repos/${repo}/issues/${number}/comments`, { body });
     }
 
+    async deleteComment(repo, id) {
+        try {
+            await this.request('DELETE', `/repos/${repo}/issues/comments/${id}`);
+        } catch {
+            // Sans droit de suppression la revendication perdue expire d elle-meme (fenetre de claim).
+        }
+    }
+
     labels(repo, number) {
         return this.getIssue(repo, number).then((issue) => (issue.labels ?? []).map((label) => label.name));
     }
