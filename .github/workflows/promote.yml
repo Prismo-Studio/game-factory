@@ -1,4 +1,4 @@
-name: build
+name: promote
 
 on:
   schedule:
@@ -13,10 +13,10 @@ on:
         default: false
 
 jobs:
-  build:
+  promote:
     uses: ./.github/workflows/_pipeline.yml
     with:
-      pipeline: build
+      pipeline: promote
       repo: ${{ inputs.repo || '' }}
       dry_run: ${{ inputs.dry_run || false }}
     secrets:

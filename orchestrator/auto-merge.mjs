@@ -68,12 +68,12 @@ for (const repo of repos) {
         merged += 1;
     }
 }
-// Une PR mergee fait avancer develop : c est exactement la condition d entree de la pipeline
-// Build, qui publie la release que la QA ira tester. Sans ce reveil on attendrait le cron.
+// Une PR mergee fait avancer develop : c est la condition d entree de la pipeline Promote,
+// qui pousse develop vers main, ce qui declenche la release que la QA ira tester.
 if (merged > 0) {
     try {
-        await gh.dispatchWorkflow(`${org}/game-factory`, 'build.yml', { ref: 'main' });
-        console.log('Run build mis en file (develop a avance).');
+        await gh.dispatchWorkflow(`${org}/game-factory`, 'promote.yml', { ref: 'main' });
+        console.log('Run promote mis en file (develop a avance).');
     } catch (error) {
         console.log(`Reveil de build impossible : ${error.message}`);
     }

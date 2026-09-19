@@ -60,10 +60,14 @@ Le lot de tickets initial est epuisable ; l usine ne doit pas l etre. La chaine 
 cycle, pas une ligne :
 
 `spec` decoupe le GDD -> `triage` route -> `dev` et `assets` produisent des PR -> `review` les
-relit -> l auto-merge les pose sur `develop` -> **`build` publie une release `build-N`** ->
-**`qa` installe cette release, y joue, et depose un ticket `triage` + `origin:qa` par ecart
-constate** -> `triage` route ces tickets -> `dev` les corrige -> `develop` avance -> `build` a
-nouveau.
+relit -> l auto-merge les pose sur `develop` -> **`promote` pousse `develop` vers `main`** ->
+le `build.yml` du depot du jeu publie la release `build-N` -> **`qa` installe cette release, y
+joue, et depose un ticket `triage` + `origin:qa` par ecart constate** -> `triage` route ces
+tickets -> `dev` les corrige -> `develop` avance -> `promote` a nouveau.
+
+L usine ne construit pas l APK : chaque depot de jeu sait deja le faire au push sur `main`.
+Le maillon qui manquait n etait pas le build, c etait la promotion — elle n arrivait que par un
+cron du soir ou une main humaine.
 
 Les deux maillons en gras sont ceux qui referment le cycle. Sans eux, l usine s arrete en silence
 le jour ou le dernier ticket du lot initial est ferme : aucune erreur, aucun run rouge, juste plus
@@ -72,8 +76,8 @@ termine.
 
 Consequences pratiques :
 
-- `build` et `qa` sont dans `GF_HEARTBEAT_PIPELINES` au meme titre que les autres. Les en retirer
+- `promote` et `qa` sont dans `GF_HEARTBEAT_PIPELINES` au meme titre que les autres. Les en retirer
   arrete la generation de tickets.
-- L auto-merge reveille `build` des qu il a merge quelque chose : `develop` vient d avancer.
-- Un jeu dont le ticket `Factory control` porte `factory:paused` sort du cycle entierement, build
-  et QA compris. C est le seul bouton d arret.
+- L auto-merge reveille `promote` des qu il a merge quelque chose : `develop` vient d avancer.
+- Un jeu dont le ticket `Factory control` porte `factory:paused` sort du cycle entierement, promotion
+  et QA comprises. C est le seul bouton d arret.

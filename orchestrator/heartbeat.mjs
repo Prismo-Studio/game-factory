@@ -6,7 +6,7 @@
 // Le chainage ne suffit pas non plus, il ne relance que tant que quelque chose tourne deja.
 // Ce script, lance en boucle sur la machine qui heberge les runners, garantit le reveil.
 //
-// `build` et `qa` en font partie : ce sont elles qui rebouclent l usine (develop avance -> release
+// `promote` et `qa` en font partie : ce sont elles qui rebouclent l usine (develop avance -> promotion -> release
 // -> QA joue le build -> tickets origin:qa -> triage -> dev). Les retirer de cette liste arrete la
 // generation de tickets des que le lot initial est epuise.
 //
@@ -15,7 +15,7 @@
 import { env, warn } from './lib/env.mjs';
 import { GitHub } from './lib/github.mjs';
 
-const PIPELINES = (env('GF_HEARTBEAT_PIPELINES') ?? 'triage,dev,review,assets,spec,bootstrap,build,qa').split(',').map((name) => name.trim()).filter(Boolean);
+const PIPELINES = (env('GF_HEARTBEAT_PIPELINES') ?? 'triage,dev,review,assets,spec,bootstrap,promote,qa').split(',').map((name) => name.trim()).filter(Boolean);
 const org = env('GF_ORG') ?? 'Prismo-Studio';
 const args = process.argv.slice(2);
 const once = args.includes('--once');
