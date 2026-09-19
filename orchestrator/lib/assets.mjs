@@ -35,11 +35,43 @@ export function parseArtTicket(body) {
     };
 }
 
-// --- source 1 : bibliotheque locale indexee (Kenney, Quaternius) ---
+// --- source 1 : bibliotheque locale indexee ---
+
+// Mots que les packs utilisent pour ranger leurs modeles par nature. Un ticket `characters` qui
+// tombe sur un modele range dans `characters` vaut mieux qu un modele range ailleurs, meme si les
+// deux portent le mot-cle : c est ce qui evite de livrer `shield_round_barbarian` pour un heros.
+const CATEGORY_TAGS = {
+    characters: ['characters', 'character', 'adventurers', 'skeletons', 'monsters'],
+    props: ['props', 'items', 'bits'],
+    environment: ['environment', 'dungeon', 'nature', 'forest', 'tiles'],
+    vehicles: ['vehicles'],
+    ui3d: ['ui', 'icons'],
+};
+
+// Un modele dont le nom EST le mot-cle est le bon ; un modele dont le nom contient le mot-cle
+// parmi d autres est un modele plus specifique, qui n est le bon que faute de mieux.
+export function scoreAsset(asset, query) {
+    const words = String(asset.name).split(/[-_ .]+/).filter(Boolean);
+    let score = 0;
+    for (const keyword of query.keywords) {
+        if (!keyword) continue;
+        if (asset.name === keyword) score += 6;
+        else if (words[0] === keyword) score += 4;
+        else if (words.includes(keyword)) score += 3;
+        else if (asset.tags.includes(keyword)) score += 2;
+        else if (asset.name.includes(keyword)) score += 1;
+    }
+    if (score === 0) return 0;
+    const family = CATEGORY_TAGS[query.category] ?? [];
+    if (family.some((tag) => asset.tags.includes(tag))) score += 3;
+    // A score egal, le nom le plus court gagne : moins de mots en trop, donc moins de specificite
+    // non demandee. Fraction, pour ne jamais passer devant un vrai point de correspondance.
+    return score + 1 / (words.length + 1);
+}
+
 export function searchLocalIndex(query, index) {
-    const wanted = query.keywords;
     return (index?.assets ?? [])
-        .map((asset) => ({ asset, score: wanted.filter((word) => asset.tags.includes(word) || asset.name.includes(word)).length }))
+        .map((asset) => ({ asset, score: scoreAsset(asset, query) }))
         .filter(({ score }) => score > 0)
         .sort((a, b) => b.score - a.score)
         .map(({ asset }) => asset);
