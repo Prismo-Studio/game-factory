@@ -54,13 +54,20 @@ async function unlock(gh, ticket) {
     await gh.removeLabel(ticket.repo, ticket.number, LOCK_LABEL);
 }
 
-async function chain(gh, org, pipeline) {
+// La pipeline qui vient de produire un label d entree pour une autre la reveille : sans cela on
+// attendrait le cron, qui peut etre retarde de plusieurs heures par GitHub.
+const NEXT_PIPELINE = { dev: 'review', assets: 'review', spec: 'triage', triage: 'dev', bootstrap: 'spec', concept: 'bootstrap' };
+
+async function chain(gh, org, pipeline, { also = [] } = {}) {
     if (isDryRun() || !inActions() || String(env('GF_CHAIN') ?? 'true') !== 'true') return;
-    try {
-        await gh.dispatchWorkflow(`${org}/game-factory`, `${pipeline.name}.yml`, { ref: 'main' });
-        console.log('Run suivant mis en file (chainage).');
-    } catch (error) {
-        warn(`Chainage impossible : ${sanitizeSecrets(error.message)}`);
+    const targets = [...new Set([pipeline.name, ...also, NEXT_PIPELINE[pipeline.name]].filter(Boolean))];
+    for (const target of targets) {
+        try {
+            await gh.dispatchWorkflow(`${org}/game-factory`, `${target}.yml`, { ref: 'main' });
+            console.log(`Run ${target} mis en file (chainage).`);
+        } catch (error) {
+            warn(`Chainage vers ${target} impossible : ${sanitizeSecrets(error.message)}`);
+        }
     }
 }
 
