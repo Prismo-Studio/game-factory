@@ -12,7 +12,9 @@ import { glbStats } from './lib/glb.mjs';
 
 // Dossiers et suffixes que les packs ajoutent d eux-memes : aucune valeur de recherche, et
 // ils feraient matcher n importe quel mot-cle sur n importe quel modele.
-const NOISE = new Set(['assets', 'asset', 'models', 'model', 'gltf', 'glb', 'fbx', 'obj', 'source', 'sources', 'samples', 'sample', 'textures', 'texture', 'materials', 'preview', 'previews', 'free', 'pack', 'packs', 'unity', 'unreal', 'godot', 'lib', 'library', 'files']);
+// Le nom de l editeur du pack est sur 100 % des modeles : comme tag il ne discrimine rien et
+// fait matcher n importe quelle recherche sur n importe quel modele.
+const NOISE = new Set(['kay', 'kit', 'kaykit', 'kenney', 'quaternius', 'synty', 'bits', 'assets', 'asset', 'models', 'model', 'gltf', 'glb', 'fbx', 'obj', 'source', 'sources', 'samples', 'sample', 'textures', 'texture', 'materials', 'preview', 'previews', 'free', 'pack', 'packs', 'unity', 'unreal', 'godot', 'lib', 'library', 'files']);
 
 const root = env('GF_ASSET_LIBRARY');
 if (!root) throw new Error('GF_ASSET_LIBRARY requis (dossier des packs)');
