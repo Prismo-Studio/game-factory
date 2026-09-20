@@ -22,6 +22,13 @@ export function glbStats(buffer) {
 }
 
 // Facteur d echelle uniforme pour amener le modele dans les dimensions cibles (le plus grand axe dicte).
+// Echelle par axe : etire le modele pour remplir exactement la boite demandee. Reservee aux
+// formes dont l etirement ne se voit pas (barre, tige, poutre, banniere). Sur un personnage ou
+// un objet reconnaissable, elle deforme — d ou le choix explicite dans le ticket.
+export function fitScaleAxes(actualSize, targetSize) {
+    return actualSize.map((value, axis) => (value > 1e-6 && targetSize[axis] > 0 ? targetSize[axis] / value : 1));
+}
+
 export function fitScale(actualSize, targetSize) {
     const ratios = actualSize.map((value, axis) => (value > 1e-6 && targetSize[axis] > 0 ? targetSize[axis] / value : Infinity)).filter(Number.isFinite);
     return ratios.length ? Math.min(...ratios) : 1;

@@ -2,7 +2,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { env } from './env.mjs';
-import { glbStats, fitScale } from './glb.mjs';
+import { glbStats, fitScale, fitScaleAxes } from './glb.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
 export const SOURCES = JSON.parse(readFileSync(resolve(here, '..', '..', 'assets', 'sources.json'), 'utf8'));
@@ -19,6 +19,9 @@ export function parseArtTicket(body) {
     const pivot = (field('Pivot') ?? '').match(/bottom_center|center/)?.[0] ?? 'bottom_center';
     const collision = (field('Collision') ?? '').match(/box|cylinder|sphere|mesh|none/)?.[0] ?? 'box';
     const usage = field('Usage') ?? '';
+    // « Echelle : axes » autorise un etirement par axe. Sans ce champ, l echelle reste uniforme :
+    // c est le bon defaut, un modele etire au hasard se remarque immediatement.
+    const scaleMode = /axes|non.?uniforme/i.test(field('Echelle') ?? '') ? 'axes' : 'uniforme';
     // Ordre de recherche : mots-cles anglais explicites (champ Recherche), puis le nom snake_case (anglais par
     // convention), puis les mots de l usage (francais : rarement utiles sur une API anglophone, en dernier).
     const explicit = (field('Recherche') ?? '').toLowerCase().split(/[,;]+/).map((word) => word.trim()).filter(Boolean);
@@ -31,6 +34,7 @@ export function parseArtTicket(body) {
         size: dims ? [dims[1], dims[2], dims[3]].map((value) => Number(value.replace(',', '.'))) : null,
         pivot,
         collision,
+        scaleMode,
         keywords,
     };
 }
@@ -142,7 +146,7 @@ export async function findAsset(query, { maxTriangles = 2000, maxTrianglesLibrar
         const buffer = readFileSync(join(env('GF_ASSET_LIBRARY'), asset.file));
         const stats = glbStats(buffer);
         attempts.push({ source: asset.id, triangles: stats.triangles });
-        if (stats.triangles <= maxTrianglesLibrary) return { candidate: { ...asset, license: asset.license ?? 'CC0' }, buffer, stats, scale: query.size ? fitScale(stats.size, query.size) : 1, attempts };
+        if (stats.triangles <= maxTrianglesLibrary) return { candidate: { ...asset, license: asset.license ?? 'CC0' }, buffer, stats, scale: query.size ? (query.scaleMode === 'axes' ? fitScaleAxes(stats.size, query.size) : fitScale(stats.size, query.size)) : 1, attempts };
     }
     // L API ne renvoie pas toujours le nombre de triangles : le seul chiffre sur lequel on peut
     // compter est celui du .glb telecharge. On essaie donc plusieurs candidats par mot-cle et on
@@ -178,7 +182,7 @@ export async function findAsset(query, { maxTriangles = 2000, maxTrianglesLibrar
         }
         attempts.push({ source: 'polypizza', keyword, results: results.length, chosen: chosen?.candidate.id ?? null });
         if (!chosen) continue;
-        return { ...chosen, scale: query.size ? fitScale(chosen.stats.size, query.size) : 1, attempts };
+        return { ...chosen, scale: query.size ? (query.scaleMode === 'axes' ? fitScaleAxes(chosen.stats.size, query.size) : fitScale(chosen.stats.size, query.size)) : 1, attempts };
     }
     return { candidate: null, attempts };
 }

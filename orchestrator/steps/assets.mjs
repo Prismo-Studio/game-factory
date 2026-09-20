@@ -3,6 +3,7 @@ import { join } from 'node:path';
 import { execFileSync, spawnSync } from 'node:child_process';
 import { git } from '../lib/git.mjs';
 import { findAsset, parseArtTicket, SOURCES } from '../lib/assets.mjs';
+import { BASE_BRANCH } from '../pipelines.mjs';
 
 // Doivent rester alignes sur BUDGET et BUDGET_LIBRARY de tools/asset_check.py du template,
 // qui refuse l asset au-dela.
@@ -29,9 +30,12 @@ export async function produceAsset({ ticket, targetDir, reportFile }) {
     let placeholder = false;
     if (found.candidate) {
         writeFileSync(join(folder, `${query.name}.glb`), found.buffer);
-        const scale = Number(found.scale.toFixed(4));
-        const scaledMin = found.stats.bounds.min.map((value) => value * scale);
-        const scaledMax = found.stats.bounds.max.map((value) => value * scale);
+        // `scale` est un nombre (echelle uniforme) ou un triplet (etirement par axe, « Echelle : axes »).
+        const axes = Array.isArray(found.scale);
+        const scale = axes ? found.scale.map((value) => Number(value.toFixed(4))) : Number(found.scale.toFixed(4));
+        const at = (axis) => (axes ? scale[axis] : scale);
+        const scaledMin = found.stats.bounds.min.map((value, axis) => value * at(axis));
+        const scaledMax = found.stats.bounds.max.map((value, axis) => value * at(axis));
         const center = scaledMin.map((value, axis) => (value + scaledMax[axis]) / 2);
         const offset = query.pivot === 'bottom_center' ? [-center[0], -scaledMin[1], -center[2]] : center.map((value) => -value);
         const bounds = { min: scaledMin.map((value, axis) => Number((value + offset[axis]).toFixed(4))), max: scaledMax.map((value, axis) => Number((value + offset[axis]).toFixed(4))) };
@@ -71,8 +75,12 @@ export async function produceAsset({ ticket, targetDir, reportFile }) {
     if (!git(['status', '--porcelain'], targetDir)) {
         writeFileSync(reportFile, JSON.stringify({
             status: 'BLOCKED', kind: 'needs-human', ticket: ticket.number,
-            reason: `Aucun modele CC0 exploitable pour ${query.name} (${found.attempts.map((item) => item.source + (item.skipped ? ' ignore : ' + item.skipped : item.keyword ? ` ${item.keyword}=${item.results}` : '')).join(' ; ')}), et le placeholder deja en place est inchange : rien a livrer.`,
-            actionRequired: 'Affiner les mots-cles Recherche du ticket, relever le budget de la categorie, ou fournir le modele a la main.',
+            reason: placeholder
+                ? `Aucun modele CC0 exploitable pour ${query.name} (${found.attempts.map((item) => item.source + (item.skipped ? ' ignore : ' + item.skipped : item.keyword ? ` ${item.keyword}=${item.results}` : '')).join(' ; ')}), et le placeholder deja en place est inchange : rien a livrer.`
+                : `Le modele retenu (${found.candidate.id}) est deja celui qui est sur ${BASE_BRANCH}, a l identique : relancer ce ticket sans changer ses criteres redonnera le meme resultat.`,
+            actionRequired: placeholder
+                ? 'Affiner les mots-cles Recherche du ticket, relever le budget de la categorie, ou fournir le modele a la main.'
+                : 'Changer les criteres du ticket (mots-cles, dimensions, echelle) si ce modele ne convient pas, ou fermer le ticket s il convient.',
         }, null, 2));
         return { found: false };
     }
